@@ -1,0 +1,13 @@
+{$DOMAIN} {
+ root * /srv
+ encode zstd gzip
+ header X-Content-Type-Options nosniff
+ header Referrer-Policy strict-origin-when-cross-origin
+ @code path / *.html *.js *.css *.json
+ header @code Cache-Control "no-cache"
+ @ads path /shared/ads/*
+ header @ads Access-Control-Allow-Origin "*"
+ @wasm path *.wasm
+ header @wasm Content-Type application/wasm
+ file_server
+}

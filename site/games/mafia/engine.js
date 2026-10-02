@@ -1,0 +1,83 @@
+/* Mafia: Night City — shared rules. No dependencies. */
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.Mafia=factory();})(typeof globalThis==='object'?globalThis:this,function(){
+'use strict';
+const ROLES=['citizen','mafia','don','sheriff','doctor','mistress','maniac'];
+const NAMES=['Алекс','София','Марк','Ева','Лев','Ника','Макс','Лана','Ян','Мира','Роман','Ася','Тим','Кира','Олег','Алиса','Денис','Анна','Илья','Вера'];
+const EN_NAMES=['Alex','Sofia','Mark','Eva','Leo','Nika','Max','Lana','Ian','Mira','Roman','Aya','Tim','Kira','Oleg','Alice','Dennis','Anna','Ilya','Vera'];
+const team=r=>r==='mafia'||r==='don'?'mafia':r==='maniac'?'maniac':'town';
+const clean=(s,n=24)=>String(s??'').replace(/[\u0000-\u001f\u202a-\u202e\u2066-\u2069]/g,'').trim().slice(0,n);
+const bounded=(v,d,min,max)=>Number.isFinite(+v)?Math.max(min,Math.min(max,Math.floor(+v))):d;
+function settings(s={}){return {count:bounded(s.count,10,6,21),night:bounded(s.night,35,15,120),day:bounded(s.day,60,20,180),vote:bounded(s.vote,30,15,90),don:s.don!==false,mistress:s.mistress!==false,maniac:s.maniac===true,lang:s.lang==='en'?'en':'ru',roomMode:'online',speakingTurns:s.speakingTurns===true};}
+function composition(n,s){const count=Math.max(1,Math.floor(n/4));let a=Array(count).fill('mafia');if(s.don&&n>=9)a[0]='don';a.push('sheriff','doctor');if(s.mistress&&n>=8)a.push('mistress');if(s.maniac&&n>=10)a.push('maniac');while(a.length<n)a.push('citizen');return a;}
+class Game{
+ constructor(opts={},random=Math.random){this.settings=settings(opts);this.random=random;this.players=[];this.phase='lobby';this.round=0;this.seq=0;this.deadline=0;this.actions={};this.log=[];this.notes={};this.checks={};this.previous={};this.winner=null;this.id=String(Date.now())+'-'+Math.floor(random()*1e9);this.eventId=0;this.stalemate=0;}
+ add(id,name,bot=false){if(this.phase!=='lobby')throw Error('started');if(this.players.length>=21)throw Error('full');if(this.players.some(p=>p.id===id))throw Error('duplicate');this.players.push({id,name:clean(name)||'Player',bot,alive:true,role:null});this.notes[id]=[];this.checks[id]={};}
+ addBots(total){if(this.phase!=='lobby')throw Error('started');while(this.players.length<Math.min(21,total)){let k=this.players.length;while(this.player('bot-'+k))k++;this.add('bot-'+k,(this.settings.lang==='en'?EN_NAMES:NAMES)[k%20],true);}}
+ event(key,data={},scope='all'){this.log.push({id:++this.eventId,key,data,scope,round:this.round});if(this.log.length>160)this.log.shift();}
+ note(id,key,data){this.notes[id].push({key,data,round:this.round});if(this.notes[id].length>40)this.notes[id].shift();}
+ pick(a){return a.length?a[Math.floor(this.random()*a.length)]:null;}
+ alive(){return this.players.filter(p=>p.alive);}
+ player(id){return this.players.find(p=>p.id===id);}
+ start(now=Date.now()){if(this.phase!=='lobby')throw Error('started');if(this.players.length<6)throw Error('minPlayers');const roles=composition(this.players.length,this.settings);for(let i=roles.length-1;i>0;i--){const j=Math.floor(this.random()*(i+1));[roles[i],roles[j]]=[roles[j],roles[i]];}this.players.forEach((p,i)=>p.role=roles[i]);this.round=1;this.setPhase('role',now);this.event('dealt');}
+ setPhase(phase,now){this.phase=phase;this.seq++;this.actions={};this.deadline=phase==='ended'?0:now+1000*(phase==='role'?10:this.settings[phase]||30);this.botAt=now+1800;this.discussion=null;this.replyQueue=[];this.replied={};this.speech=null;if(phase==='day'&&this.settings.speakingTurns){const ids=this.alive().map(p=>p.id),offset=(this.round-1)%ids.length;this.speech={order:[...ids.slice(offset),...ids.slice(0,offset)],index:-1,player:null,startedAt:now,said:false};this.advanceSpeech(now);}}
+ advanceSpeech(now=Date.now()){
+  const speech=this.speech;if(this.phase!=='day'||!speech)throw Error('phase');
+  do{speech.index++;speech.player=speech.order[speech.index]||null;}while(speech.player&&!this.player(speech.player)?.alive);
+  if(!speech.player){this.setPhase('vote',now);this.event('vote');return;}
+  this.seq++;speech.startedAt=now;speech.said=false;this.deadline=now+120000;this.botAt=now+1800;
+  this.event('speechTurn',{player:speech.player,index:speech.index,total:speech.order.length});
+ }
+ requireSpeaker(id,seq,now=Date.now()){
+  if(this.phase!=='day'||!this.speech)throw Error('phase');if(seq!==this.seq)throw Error('stale');
+  if(!this.player(id)?.alive||this.speech.player!==id)throw Error('notSpeaker');if(now>=this.deadline)throw Error('speechEnded');
+ }
+ nextSpeaker(id,seq,now=Date.now()){this.requireSpeaker(id,seq,now);this.advanceSpeech(now);}
+ targets(id,kind='target'){const p=this.player(id);if(!p?.alive)return [];if(this.phase==='vote')return this.alive().filter(x=>x.id!==id).map(x=>x.id);if(this.phase!=='night')return [];if(kind==='check'&&p.role!=='don')return [];if(p.role==='citizen')return [];return this.alive().filter(x=>{if(x.id===id&&p.role!=='doctor')return false;if(kind==='check')return team(x.role)!=='mafia';if(team(p.role)==='mafia')return team(x.role)!=='mafia';if((p.role==='doctor'||p.role==='mistress')&&this.previous[id]===x.id)return false;return true;}).map(x=>x.id);}
+ act(id,a={}){const p=this.player(id);if(!p?.alive)throw Error('eliminated');if(a.seq!==this.seq)throw Error('stale');if(!['night','vote'].includes(this.phase))throw Error('phase');if(this.phase==='night'&&p.role==='citizen')throw Error('phase');for(const k of ['target','check'])if(a[k]!=null&&!this.targets(id,k).includes(a[k]))throw Error('target');this.actions[id]={target:a.target??null,check:p.role==='don'?a.check??null:null};}
+ chat(id,text,channel='public',now=Date.now()){const p=this.player(id);if(!p)throw Error('missing');text=clean(text,280);if(!text)return;if(channel==='mafia'){if(this.phase!=='night'||!p.alive||team(p.role)!=='mafia')throw Error('chatClosed');}else if(!['lobby','day','ended'].includes(this.phase)||(!p.alive&&this.phase!=='ended'))throw Error('chatClosed');this.event('chat',{name:p.name,text,player:id},channel==='mafia'?'mafia':'all');if(channel!=='mafia'&&this.phase==='day'&&!p.bot&&!this.speech)this.queueReply(p,text,now);}
+ suspicion(p,candidate){let value=this.random()*1.5;const known=this.checks[p.id][candidate.id];if(known===true)value+=10;if(known===false)value-=8;if(team(p.role)==='mafia'&&team(candidate.role)==='mafia')value-=20;
+ // Public claims and disclosed voting records are the only shared evidence used by bots.
+ const opinions=new Map();for(const e of this.log)if(e.round>=this.round-1&&e.data.target===candidate.id&&e.data.player!==p.id&&['suspect','agree','voteAsk','voteClear'].includes(e.data.kind))opinions.set(e.data.player,e.data.kind==='voteClear'?-.25:.18);value+=Math.max(-1,Math.min(1.5,[...opinions.values()].reduce((a,b)=>a+b,0)));
+ for(const e of this.log){if(e.key==='accuse'&&e.data.target===candidate.id){const speaker=this.player(e.data.player);if(speaker&&!speaker.alive&&team(speaker.role)!=='town')continue;value+=1.2;}if(e.key==='clear'&&e.data.target===candidate.id)value-=0.7;if(e.key==='voteResult'&&e.data.out){const out=this.player(e.data.out);if(out&&!out.alive&&team(out.role)==='mafia'){for(const v of e.data.votes||[])if(v.target===out.id&&v.player===candidate.id)value-=1.5;}}}return value;}
+ botAction(p){const valid=this.targets(p.id);if(!valid.length)return {target:null,check:null,seq:this.seq};let ids=valid;let target;
+ if(this.phase==='vote'){target=ids.map(id=>({id,s:this.suspicion(p,this.player(id))})).sort((a,b)=>b.s-a.s)[0].id;}
+ else if(p.role==='sheriff'||p.role==='don'){target=this.pick(ids.filter(id=>this.checks[p.id][id]===undefined))||this.pick(ids);}
+ else if(p.role==='doctor'){const revealed=this.log.filter(e=>['accuse','clear'].includes(e.key)).map(e=>e.data.player);target=this.pick(ids.filter(id=>revealed.includes(id)))||(ids.includes(p.id)&&this.random()<0.35?p.id:this.pick(ids));}
+ else if(team(p.role)==='mafia'){const claims=this.log.filter(e=>['accuse','clear'].includes(e.key)).map(e=>e.data.player);target=this.pick(ids.filter(id=>claims.includes(id)))||this.pick(ids);}
+ else target=this.pick(ids);
+ const check=p.role==='don'?(this.pick(this.targets(p.id,'check').filter(id=>this.checks[p.id][id]===undefined))||this.pick(this.targets(p.id,'check'))):null;return {target,check,seq:this.seq};}
+ // Phrase bags and discussion memory are private, serializable and survive solo saves.
+ phrase(kind){this.phrases ||= {};let bag=this.phrases[kind];if(!bag?.length){bag=[0,1,2,3,4,5];for(let i=bag.length-1;i>0;i--){const j=Math.floor(this.random()*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}const last=this.lastPhrase?.[kind];if(bag.at(-1)===last)[bag[0],bag[5]]=[bag[5],bag[0]];this.phrases[kind]=bag;}const variant=bag.pop();this.lastPhrase ||= {};this.lastPhrase[kind]=variant;return variant;}
+ say(p,kind,target,extra={}){const key=['accuse','clear'].includes(kind)?kind:'talk';this.event(key,{player:p.id,name:p.name,target,kind,variant:this.phrase(kind),...extra});this.topics ||= {};this.topics[p.id]=[...(this.topics[p.id]||[]),kind].slice(-3);}
+ queueReply(speaker,text,now){this.replyQueue ||= [];this.replied ||= {};if(this.replyQueue.length>=3)return;const candidates=this.alive().filter(p=>p.bot&&(this.replied[p.id]||0)<2&&!this.replyQueue.some(r=>r.player===p.id));const named=candidates.filter(p=>text.toLocaleLowerCase().includes(p.name.toLocaleLowerCase()));const sheriffRequest=/шериф|sheriff/i.test(text);const p=this.pick(named.length?named:candidates.filter(p=>!sheriffRequest||p.role==='sheriff'))||this.pick(candidates);if(!p)return;this.replied[p.id]=(this.replied[p.id]||0)+1;this.replyQueue.push({player:p.id,target:speaker.id,kind:named.length?'reply':'question',after:Math.max(0,now-(this.deadline-this.settings.day*1000))+1400});}
+ discuss(p,reply){const recent=this.log.filter(e=>e.round===this.round&&['talk','suspect','accuse','clear'].includes(e.key));
+ if(p.role==='sheriff'&&!recent.some(e=>e.data.player===p.id&&['accuse','clear'].includes(e.key))){const entries=Object.entries(this.checks[p.id]).filter(([id])=>this.player(id)?.alive);const e=entries.find(x=>x[1])||entries.at(-1);if(e){this.say(p,e[1]?'accuse':'clear',e[0]);return;}}
+ if(reply){this.say(p,reply.kind,reply.target);return;}
+ const history=this.topics?.[p.id]||[];
+ const accused=recent.slice(-6).reverse().find(e=>e.data.target===p.id&&e.data.player!==p.id&&['accuse','suspect','question','voteAsk','challenge'].includes(e.data.kind||e.key));
+ if(accused&&!history.slice(-2).includes('defend')){this.say(p,'defend',accused.data.player);return;}
+ const suspects=this.alive().filter(x=>x.id!==p.id&&(team(p.role)!=='mafia'||team(x.role)!=='mafia'));
+ const c=suspects.map(x=>({p:x,s:this.suspicion(p,x)})).sort((a,b)=>b.s-a.s)[0]?.p;if(!c)return;
+ const lastVote=this.log.filter(e=>e.key==='voteResult').at(-1)?.data;const options=['suspect','question','caution'];
+ if(recent.some(e=>e.data.target===c.id&&e.data.player!==p.id))options.push('agree','challenge');
+ if(lastVote?.out){const out=this.player(lastVote.out);const vote=lastVote.votes.find(v=>v.player===c.id);if(vote?.target===out.id&&team(out.role)!=='maniac')options.push(team(out.role)==='mafia'?'voteClear':'voteAsk');if(team(out.role)==='town'&&lastVote.votes.some(v=>v.player===p.id&&v.target===out.id))options.push('regret');}
+ const kind=this.pick(options.filter(k=>!history.includes(k)))||this.pick(options);this.say(p,kind,c.id,{subject:lastVote?.out||null});
+ }
+ bots(now=Date.now(),extra=[]){if(now<this.botAt)return;const bots=this.alive().filter(p=>p.bot||extra.includes(p.id));if(['night','vote'].includes(this.phase)){for(const p of bots){if(!(p.id in this.actions)&&!(this.phase==='night'&&p.role==='citizen'))this.act(p.id,this.botAction(p));}return;}if(this.phase!=='day'||!bots.length)return;
+ if(this.speech){const p=this.player(this.speech.player);if(p?.bot&&!this.speech.said){this.speech.said=true;this.discuss(p);}return;}
+ if(!this.discussion){const ids=bots.map(p=>p.id);for(let i=ids.length-1;i>0;i--){const j=Math.floor(this.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}const limit=Math.min(ids.length*3,Math.max(4,Math.floor((this.settings.day*1000-4000)/2200)),24);this.discussion={ids,turn:0,limit,next:1800,gap:(this.settings.day*1000-5000)/limit};}
+ const d=this.discussion,elapsed=now-(this.deadline-this.settings.day*1000);while(d.turn<d.limit&&elapsed>=d.next){const replyIndex=(this.replyQueue||[]).findIndex(r=>r.after<=elapsed&&this.player(r.player)?.alive);const reply=replyIndex>=0?this.replyQueue.splice(replyIndex,1)[0]:null;let p=reply?this.player(reply.player):this.player(d.ids[d.turn%d.ids.length]);if(p?.alive&&(p.bot||extra.includes(p.id)))this.discuss(p,reply);d.turn++;d.next=1800+d.turn*d.gap;}
+ }
+ majority(votes){const counts={};for(const id of votes)if(id)counts[id]=(counts[id]||0)+1;const max=Math.max(0,...Object.values(counts));const winners=Object.keys(counts).filter(id=>counts[id]===max);return winners.length===1?winners[0]:null;}
+ night(){const alive=this.alive();const blocked=new Set();for(const p of alive.filter(p=>p.role==='mistress')){this.previous[p.id]=null;const id=this.actions[p.id]?.target;if(id){blocked.add(id);this.previous[p.id]=id;}}
+ const heals=new Set();const mafiaVotes=[];const attacks=new Set();for(const p of alive){if(p.role==='doctor')this.previous[p.id]=null;if(blocked.has(p.id)){this.note(p.id,'blocked',{});continue;}const a=this.actions[p.id]||{};if(p.role==='doctor'&&a.target){heals.add(a.target);this.previous[p.id]=a.target;}if(team(p.role)==='mafia'&&a.target)mafiaVotes.push(a.target);if(p.role==='maniac'&&a.target)attacks.add(a.target);if(p.role==='sheriff'&&a.target){const evil=team(this.player(a.target).role)==='mafia';this.checks[p.id][a.target]=evil;this.note(p.id,'checked',{target:a.target,evil});}if(p.role==='don'&&a.check){const sheriff=this.player(a.check).role==='sheriff';this.checks[p.id][a.check]=sheriff;this.note(p.id,'donChecked',{target:a.check,sheriff});}}
+ const victim=this.majority(mafiaVotes);if(victim)attacks.add(victim);const out=[...attacks].filter(id=>!heals.has(id));out.forEach(id=>this.player(id).alive=false);this.event(out.length?'nightResult':'quietNight',{out});this.stalemate=out.length?0:this.stalemate+1;
+ }
+ vote(){const votes=this.alive().map(p=>({player:p.id,target:this.actions[p.id]?.target||null}));const out=this.majority(votes.map(v=>v.target));if(out)this.player(out).alive=false;this.event('voteResult',{votes,out});this.stalemate=out?0:this.stalemate+1;}
+ finish(){const a=this.alive(),m=a.filter(p=>team(p.role)==='mafia').length,k=a.filter(p=>p.role==='maniac').length;let winner=null;if(!a.length)winner='draw';else if(k&&a.length<=2&&m===0)winner='maniac';else if(m===0&&k===0)winner='town';else if(k===0&&m>=a.length-m)winner='mafia';else if(this.round>=35||this.stalemate>=8)winner='draw';if(winner){this.winner=winner;this.setPhase('ended',Date.now());this.event('winner',{winner});}return !!winner;}
+ advance(now=Date.now()){if(this.phase==='role'){this.setPhase('night',now);this.event('night');}else if(this.phase==='night'){this.night();if(!this.finish()){this.event('day');this.setPhase('day',now);}}else if(this.phase==='day'){this.setPhase('vote',now);this.event('vote');}else if(this.phase==='vote'){this.vote();if(!this.finish()){this.round++;this.setPhase('night',now);this.event('night');}}}
+ tick(now=Date.now(),extra=[]){if(['lobby','ended'].includes(this.phase))return;this.bots(now,extra);if(this.phase==='day'&&this.speech){const p=this.player(this.speech.player);if(!p?.alive||(p.bot&&now-this.speech.startedAt>=8000)||now>=this.deadline)this.advanceSpeech(now);else if(extra.includes(p.id)&&now-this.speech.startedAt>=15000){this.event('speechSkipped',{player:p.id});this.advanceSpeech(now);}return;}if(now>=this.deadline)this.advance(now);}
+ view(id){const me=this.player(id);if(!me)throw Error('missing');return {id:this.id,settings:this.settings,phase:this.phase,round:this.round,seq:this.seq,deadline:this.deadline,speech:this.speech?{player:this.speech.player,index:this.speech.index,total:this.speech.order.length,order:[...this.speech.order],startedAt:this.speech.startedAt}:null,winner:this.winner,players:this.players.map(p=>({id:p.id,name:p.name,alive:p.alive,bot:p.bot,role:(p.id===id||this.phase==='ended'||!p.alive||(me.role&&team(me.role)==='mafia'&&team(p.role)==='mafia'))?p.role:null})),me:{id:me.id,role:me.role,alive:me.alive,notes:this.notes[id],action:this.actions[id]||null,targets:this.targets(id),checkTargets:this.targets(id,'check')},log:this.log.filter(e=>e.scope==='all'||(e.scope==='mafia'&&team(me.role)==='mafia')).map(e=>({...e}))};}
+}
+return {Game,ROLES,NAMES,EN_NAMES,team,composition,settings,clean};
+});

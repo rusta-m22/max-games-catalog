@@ -1,0 +1,60 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> jarvis-max-games@1.0.0 test
+> node --test tests/*.test.mjs
+
+✔ MAX launch data arriving after initialization disables capabilities and SDK access (10.493734ms)
+✔ MAX remains disabled even with Yandex/VK globals and enabled config (0.752658ms)
+✔ Platform detection rejects a loaded compatibility facade and empty MAX bridge (0.548002ms)
+✔ Yandex: close without onRewarded never grants, duplicate callbacks grant once (11.702909ms)
+✔ Busy guard, cooldown, SDK errors and pause/resume balance (12.138795ms)
+✔ Late reward after timeout is ignored; next request cannot overlap an unknown ad (15.585688ms)
+✔ VK: no fill/cancellation/errors do not grant; confirmed reward does (1.009822ms)
+✔ No advertising call while hidden, disabled or on standalone web (0.781732ms)
+✔ Legacy facade hides unavailable offers and never invents a reward (223.625118ms)
+✔ Legacy reward callback fires exactly once after confirmed success (18.571062ms)
+✔ merge3d: a launch crosses the warning line without an early loss (5.424255ms)
+✔ merge3d: equal cubes merge on contact and chain, conserving their value (17.287012ms)
+✔ merge3d: unequal values collide, transfer momentum and never merge (1.485945ms)
+✔ merge3d: vertical separation prevents a mid-air phantom merge (0.943239ms)
+✔ merge3d: only settled cubes over the line finish a round (0.690688ms)
+✔ merge3d: a busy or finished game rejects extra shots and bonus spending (0.657067ms)
+✔ merge3d: bomb clears its impact area, spends once and preserves the queue (3.1326ms)
+✔ merge3d: wild doubles the first contacted number, without consuming the queue (1.883512ms)
+✔ merge3d: milestone gives one bomb and continues after 2048 (1.214614ms)
+✔ merge3d: mid-flight save restores the same outcome and random queue (25.402043ms)
+✔ merge3d: undo snapshot restores spent boosts and the entire turn (3.871113ms)
+✔ merge3d: corrupt or incompatible saved games are rejected (0.814506ms)
+✔ merge3d: revive is limited to one and clears the warning zone (0.306762ms)
+✔ merge3d: 25 seeded games keep finite positions, mass balance, and bounded rounds (34343.249582ms)
+✔ Sudoku: every generated difficulty has exactly one valid solution (201.456244ms)
+✔ Merge: gravity, chains, conservation and full-column rejection (0.374451ms)
+✔ Russian checkers: compulsory backward capture, chain and promotion (0.672985ms)
+✔ Corners: jump chains and correct target camp (0.678627ms)
+✔ Match 3: boards start clear, have a legal move, reject non-neighbor swaps (5.502932ms)
+✔ Mahjong: every layout has a complete sequence of free pairs (82.738678ms)
+✔ Durak: 100 complete games never duplicate or lose a card (42.185169ms)
+✔ Solitaire rules: deals conserve cards, invalid moves do not mutate state (3.224082ms)
+✔ DOM integration: sudoku (892.838066ms)
+✔ DOM integration: words (761.836371ms)
+✔ DOM integration: mahjong (756.532444ms)
+✔ DOM integration: chess (1625.741011ms)
+✔ DOM integration: checkers (1745.295073ms)
+✔ DOM integration: corners (1613.436003ms)
+✔ DOM integration: durak (2181.470831ms)
+✔ DOM integration: klondike (865.816225ms)
+✔ DOM integration: spider (764.724746ms)
+✔ DOM integration: tricks (777.996764ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34607.028251
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

@@ -1,0 +1,6 @@
+Illustrations by OpenMoji — the open-source emoji and icon project.
+https://openmoji.org/
+License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+https://creativecommons.org/licenses/by-sa/4.0/
+Source SVGs included in assets/openmoji. Used from the openmoji npm package 17.0.0.
+Changes: scaled from 72x72 to 24x24 coordinates for inline rendering; decorative movement, shadows, split views and silhouette effects. Adapted OpenMoji artwork remains CC BY-SA 4.0. Original game code and original puzzle text are separate works.

@@ -1,0 +1,27 @@
+{
+  "version": "1.2.0",
+  "date": "2026-09-30",
+  "total": 1781,
+  "categories": {
+    "animals": 60,
+    "cars": 60,
+    "cinema": 60,
+    "games": 60,
+    "geography": 80,
+    "history": 160,
+    "inventions": 60,
+    "literature": 60,
+    "logic": 630,
+    "millennium": 60,
+    "music": 60,
+    "mysteries": 60,
+    "nature": 60,
+    "nineties": 60,
+    "science": 71,
+    "space": 60,
+    "sport": 60,
+    "technology": 60
+  },
+  "legacy_preserved": 796,
+  "new": 985
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "check": "Standalone opens via file://, no external requests, playable 3D",
+    "mode": "webgl",
+    "score": 12,
+    "errors": [],
+    "requests": []
+  },
+  {
+    "check": "Software fallback retains the same physics and score",
+    "mode": "canvas",
+    "score": 12,
+    "errors": [],
+    "requests": []
+  }
+]

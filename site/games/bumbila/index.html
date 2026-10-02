@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><script src="../../ads-config.js"></script><script src="../../ads-loader.js"></script><script src="../../legacy-platform.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>БУМбила</title>
+<link rel="icon" href="index.icon.png">
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10151c;color:#fff;font-family:Arial,sans-serif;overscroll-behavior:none}body{display:flex;align-items:center;justify-content:center;flex-direction:column}canvas{display:block;outline:none;touch-action:none}#status{position:fixed;inset:0;display:grid;place-content:center;padding:24px;text-align:center;background:#10151c;z-index:10}#status[hidden]{display:none}#controls{display:none;width:100%;max-width:720px;height:158px;flex-shrink:0;padding:8px max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));justify-content:space-between;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.touch #controls{display:flex}.dpad{display:grid;grid-template:repeat(3,44px)/repeat(3,44px);gap:3px}.dpad button{font-size:24px}.up{grid-area:1/2}.left{grid-area:2/1}.right{grid-area:2/3}.down{grid-area:3/2}button{border:1px solid #64748b;border-radius:12px;background:#29384e;color:white;touch-action:none;cursor:pointer;font-weight:700}.pressed{background:#6484b8;transform:scale(.96)}.actions{display:flex;align-items:center;gap:12px}#bomb{width:82px;height:82px;border-radius:50%;background:#bf4827;font-size:15px}#restart{width:82px;height:46px;font-size:11px}
+.touch.landscape #controls{position:absolute;inset:0;height:100%;max-width:none;pointer-events:none}.landscape .dpad,.landscape .actions{pointer-events:auto}.landscape .actions{flex-direction:column-reverse}
+</style>
+<script src="../../legacy-platform.js"></script>
+</head>
+<body>
+<canvas id="canvas" width="720" height="694" tabindex="0" aria-label="Игровое поле"></canvas>
+<div id="controls" aria-label="Управление">
+<div class="dpad"><button class="up" data-action="up" aria-label="Вверх">▲</button><button class="left" data-action="left" aria-label="Влево">◀</button><button class="right" data-action="right" aria-label="Вправо">▶</button><button class="down" data-action="down" aria-label="Вниз">▼</button></div>
+<div class="actions"><button id="restart" data-action="restart">ЗАНОВО</button><button id="bomb" data-action="bomb">БОМБА</button></div>
+</div>
+<div id="status" role="status">Загрузка игры…</div>
+<script src="index.js"></script>
+<script src="platform.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "passed": 22,
+  "checks": [
+    "Actual WebGL renderer starts",
+    "Desktop controls fit the viewport",
+    "Keyboard aim and launch produce the 2 → 4 → 8 combo",
+    "Reload restores the board and the score",
+    "Undo restores the queue and the whole board",
+    "Undo retains the personal best",
+    "Bomb launches, removes cubes and spends exactly one charge",
+    "Undo restores a spent booster",
+    "Wild cube merges and keeps the normal queue",
+    "Rules open and explain bonuses",
+    "New round resets boosts and board",
+    "Pause freezes the simulation",
+    "Advertising pause blocks launch",
+    "No rewarded offers are visible on a site without ads",
+    "Phone portrait layout fits without page scrolling",
+    "A cancelled touch gesture does not fire",
+    "Finger drag and release launches exactly one cube",
+    "Small phone layout fits",
+    "Phone landscape layout fits",
+    "A finished round can be restarted from its dialog",
+    "Restart after losing is playable",
+    "No unhandled browser JavaScript errors"
+  ],
+  "errors": []
+}

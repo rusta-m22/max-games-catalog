@@ -1,0 +1,49 @@
+ШОУ ЗНАТОКОВ 1.2 — ОТЧЁТ О ПРОВЕРКЕ
+Дата: 30.09.2026.
+Среда: Chromium 149; ширина 1440 и 390 px; локальная HTTPS-страница; интерфейс Yandex SDK имитирован.
+
+ПРОВЕРЕНО
+• 1781 двуязычная запись, уникальные ID и смысловые группы, уникальные тексты с учётом рисунка, корректные варианты ответа после перемешивания.
+• Все 590 вычислительных ответов проверены независимым расчётом.
+• 796 прежних ID и смысловых групп сохранены, старые сохранения продолжают учитываться.
+• Перебраны все 1781 вопрос по 18 категориям, с чередованием режимов и более 250 сохранениями/повторными загрузками состояния: повторов и подмен нет.
+• История: полные матчи всех четырёх шоу и этап приключения со старым сохранением, в котором прежние 10 исторических вопросов уже исчерпаны.
+• Все 18 категорий выбраны через настоящий интерфейс: загруженный вопрос соответствует выбранной теме.
+• Особые клетки 7, 28 и 0 сохраняют категорию своего столбца; проверено прямым сравнением с записью банка.
+• Подсказка «Новый вопрос» сохраняет тему; замена и перезагрузка дают другие новые вопросы.
+• История сохраняется в новой вкладке, где sessionStorage пуст.
+• Полностью исчерпанная тема не запускает матч 0:0, не создаёт статистику и не запрашивает рекламу.
+• Последний оставшийся вопрос даёт настоящий результат; вопросы логики не подставляются.
+• Журналы локального и облачного сохранений объединяются независимо от того, какая копия новее.
+• SDK: readiness один раз, вложенные паузы, один рекламный запрос одновременно, duplicate onRewarded без удвоения, закрытие без награды и ошибки.
+• Русский/английский варианты, мобильный экран 390 px и сохранённая мультяшная телестудия. Горизонтального переполнения и ошибок JavaScript нет.
+• SHA-256 основных JS и банка совпадает с финальной проверенной браузером сборкой.
+• ZIP проверяется чтением всех файлов и CRC; index.html находится в корне.
+
+ГРАНИЦЫ ПРОВЕРКИ
+Настоящие реклама, авторизация, облако и рейтинги на стороне Яндекса должны быть проверены в черновике. Проверки SDK в этом отчёте используют имитацию интерфейса, а не живой аккаунт Яндекса.
+Защита от повторов требует сохранённого журнала. Очистка браузерных данных без облачной копии, новый профиль или одновременная несинхронизированная игра на нескольких устройствах находятся за пределами гарантии.
+Банк конечен: при исчерпании тема не повторяется автоматически. Для её пополнения требуется обновление банка.
+Фактические вопросы прошли редакторский просмотр при составлении; независимая экспертная проверка каждого факта не проводилась.
+
+МАШИННЫЙ ПРОТОКОЛ
+• 1781 RU/EN questions; all 796 legacy IDs/groups retained; History 160; each other category at least 60
+• Every question consumed once across all 18 topics, all four modes and 250+ serialized restarts; no ID/group repeats or topic substitution; exhausted bank returns null
+• Legacy journal migrates to persistent semantic groups; paraphrases remain blocked after restarts and removing original records
+• Older/newer cloud snapshots merge the question journal in either direction, preserving the latest progress and never forgetting seen facts
+• Both languages: shuffled correct answers validated, distinct answer options and question lengths checked; no generated arithmetic in History
+• categories: complete History match, 6 questions, zero substitutions or repeats with exhausted legacy History
+• big: complete History match, 16 questions, zero substitutions or repeats with exhausted legacy History
+• summit: complete History match, 12 questions, zero substitutions or repeats with exhausted legacy History
+• last: complete History match, 6 questions, zero substitutions or repeats with exhausted legacy History
+• New tab preserves seen facts; History Adventure contains only History and unlocks the next stage
+• Mixed-board special cells 7 (secret), 28 (rival), 0 (risk) retain their displayed category
+• Replace-question hint keeps the selected cell category and consumes a different unseen question
+• Completely exhausted History: no 0:0 match, no changed topic, no ad, no fake stats; clear topic selector offered
+• Last remaining History question ends with the real one-question result and offers another topic; never falls back to logic
+• Yandex SDK mock: a newer cloud snapshot merges all ten legacy local questions plus its own question
+• Mobile 390px History question has no horizontal overflow; English History question and options are translated
+• Final build: a real UI question in each of 18 selected categories; all 18 strictly match the selected category
+• Final build: strict bank-category comparison against actual board column for special cells 7, 28 and 0
+• Final build: History replacement hint and browser reload both produce fresh History questions
+• Final build: mobile History fits 390px; exhausted History shows topic completion without a 0:0 result or ad

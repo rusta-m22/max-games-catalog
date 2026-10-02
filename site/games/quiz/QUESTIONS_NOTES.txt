@@ -1,0 +1,21 @@
+ШОУ ЗНАТОКОВ 1.2 — БАНК ВОПРОСОВ
+Дата обновления: 30.09.2026.
+
+985 новых двуязычных вопросов. Всего 1781. Все 796 записей предыдущего выпуска сохраняют ID и смысловые группы.
+История: древние цивилизации, история России и мира, даты, деятели и термины.
+Остальные блоки: физика, химия, география, астрономия, растения, животные, произведения литературы и музыки, кино, спортивные дисциплины, устройства и изобретения, автомобили, игры, культура 1990-х и 2000-х, археологические памятники и объяснения природных явлений, логические задачи.
+
+Справочные источники, просмотренные при работе (выборочная сверка, не сертификация всей базы):
+https://periodic-table.rsc.org/
+https://science.nasa.gov/solar-system/solar-system-facts/
+https://science.nasa.gov/solar-system/moons/facts/
+https://www.esa.int/About_Us/50_years_of_ESA/50_years_of_humans_in_space/The_flight_of_Vostok_1
+https://www.esa.int/Science_Exploration/Space_Science/Rosetta
+https://developer.mozilla.org/en-US/docs/Glossary
+https://handbook.fide.com/chapter/E012023
+https://whc.unesco.org/en/list/
+https://www.britishmuseum.org/blog/everything-you-ever-wanted-know-about-rosetta-stone
+https://www.pixar.com/feature-films
+
+Вопросы составлены заново для игры; изображения, видео, музыкальные записи, реплики персонажей и тексты чужих викторин из источников не импортировались.
+Новые фактические записи: verification.status=editorial_review (редакторский просмотр при составлении). Старые фактические записи сохраняют editorial_review_pending. Вычислительные задания: calculated и независимая программная проверка ответов.

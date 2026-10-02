@@ -1,0 +1,1 @@
+PASS: 502 site files; 141 local references; 18 catalog entries; HTTP, MIME, CORS and 404 behavior
