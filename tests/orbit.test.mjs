@@ -37,6 +37,16 @@ test('Orbit: pulse clears its cross for charge; drill penetrates two layers with
  let s=createRun(11,1);s.energy=CHARGE;let r=act(s,{type:'pulse',index:27});assert(r.ok);assert.equal(r.state.moves,s.moves);assert.equal(r.frames[0].cleared.length,15);assert(r.state.energy<=CHARGE);assert(validRun(r.state));
  const i=s.rocks.findIndex(v=>v===2);s.relics[i]=true;r=act(s,{type:'drill',index:i});assert(r.ok);assert.equal(r.state.drills,s.drills-1);assert.equal(r.state.moves,s.moves);assert.equal(r.state.rocks[i],0);assert(r.state.foundRelics>s.foundRelics);assert(validRun(r.state));
 });
+test('Orbit: resonance rewards a three-cascade chain exactly once, preserves the charge cap and checkpoints',()=>{
+ const s=createRun(2,1),r=act(s,{type:'swap',a:45,b:46});
+ assert(r.ok);assert.deepEqual(r.frames.filter(f=>f.type==='clear').map(f=>f.combo),[1,2,3]);
+ assert.equal(r.events.filter(e=>e.type==='resonance').length,1);
+ const cleared=r.frames.filter(f=>f.type==='clear').reduce((n,f)=>n+f.cleared.length,0);
+ assert.equal(r.state.energy,cleared+8);assert.equal(r.state.moves,s.moves-1);assert(validRun(r.state));
+ const full=clone(s);full.energy=35;assert.equal(act(full,{type:'swap',a:45,b:46}).state.energy,CHARGE);
+ const p=readProgress(null);p.unlocked=2;record(p,r.state);assert.deepEqual(readProgress(JSON.parse(JSON.stringify(p))).run,r.state);
+ const short=act(createRun(2,1),{type:'swap',a:19,b:20});assert(short.ok);assert.equal(short.frames.filter(f=>f.type==='clear').length,2);assert(!short.events.some(e=>e.type==='resonance'));assert.equal(short.state.energy,6);
+});
 test('Orbit: footprints never wrap around board edges',()=>{const s=createRun();assert.deepEqual(footprint(s,0,'nova'),[0,1,8,9]);assert.deepEqual(footprint(s,7,'row'),[0,1,2,3,4,5,6,7]);});
 test('Orbit: final move wins before loss; non-completed missions end on zero moves',()=>{
  let s=createRun(1,1);s.score=999;s.moves=1;let r=act(s,{type:'swap',a:hint(s)[0],b:hint(s)[1]});assert.equal(r.state.won,true);assert.equal(r.state.done,true);assert.equal(r.state.moves,0);assert.equal(stars(r.state),1);assert.equal(act(r.state,{type:'drill',index:0}).ok,false);

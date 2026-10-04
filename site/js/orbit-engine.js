@@ -127,6 +127,8 @@ export function act(input,action){
  }else return {ok:false,reason:'invalid'};
  let combo=0,matched=groups(s.board);
  while(forced?.length||matched.length){frames.push(resolveWave(s,matched,forced,++combo,preferred,events));forced=null;preferred=[];matched=groups(s.board);if(combo>=64){ensureMoves(s);frames.push({type:'shuffle',state:clone(s)});events.push({type:'shuffle'});break;}}
+ // One resonance reward per action. No timer: thoughtful moves get the same reward.
+ if(combo>=3){s.energy=Math.min(CHARGE,s.energy+8);events.push({type:'resonance',label:'Резонанс · +8 заряда'});frames.push({type:'resonance',state:clone(s)});}
  if(action.type==='swap'&&!completed(s)){
   const sector=LEVELS[s.level-1].sector;
   if(sector===1&&s.turn%5===0){const targets=shuffled(s,s.rocks.flatMap((v,i)=>v?[i]:[])).slice(0,3);s.energy=Math.min(CHARGE,s.energy+8);events.push({type:'meteor',label:'Звёздный дождь · +8 заряда'});if(targets.length){frames.push(resolveWave(s,[],targets,1,[],events));matched=groups(s.board);let limit=0;while(matched.length&&limit++<64){frames.push(resolveWave(s,matched,null,++combo,[],events));matched=groups(s.board);}}}

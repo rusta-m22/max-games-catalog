@@ -1,0 +1,33 @@
+{
+  "passed": 27,
+  "checks": [
+    "True WebGL island with 64 accessible cells",
+    "Occupied cell rejects the figure without a turn",
+    "Cancelled real touch drag preserves the whole hand",
+    "Real touch drag places once and clears the full row",
+    "Reload restores the exact committed board, hand and score",
+    "Keyboard selects and places a figure",
+    "Classic mode starts a separate untimed run",
+    "Returning to journey preserves its attempt",
+    "Hint selects a remaining piece and describes its anchor",
+    "Map contains 18 levels and locks future islands",
+    "Full viewport and reachable controls at 320×568",
+    "Full viewport and reachable controls at 360×640",
+    "Full viewport and reachable controls at 390×844",
+    "Full viewport and reachable controls at 768×1024",
+    "Full viewport and reachable controls at 844×390",
+    "Full viewport and reachable controls at 667×375",
+    "Full viewport and reachable controls at 1366×768",
+    "Full viewport and reachable controls at 1920×1080",
+    "Rotation charges exactly two energy",
+    "Wave removes a 3×3 area without a placement turn",
+    "Last-turn victory opens the next island",
+    "Next island starts a fresh attempt",
+    "Canvas fallback renders when WebGL is absent",
+    "Canvas fallback keeps the same rules and controls",
+    "Catalog has 19 games and the new launch link",
+    "Catalog search finds the new game",
+    "No unhandled browser exceptions"
+  ],
+  "errors": []
+}

@@ -24,6 +24,8 @@ async function closeDialog(page){if(await page.locator('#modal').isVisible())awa
 async function horizontalFit(page){return page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);}
 try{
  const desk=await pageFor();check('3D renders with WebGL',await desk.getAttribute('#orb-board','data-renderer')==='webgl');check('Mission objectives and 64 accessible cells exist',await desk.locator('[role="gridcell"]').count()===64&&await desk.locator('#orb-goals .orb-goal').count()===2);
+ check('Perspective narrows the far row',await desk.locator('[data-index="0"]').evaluate(e=>e.getBoundingClientRect().width<document.querySelector('[data-index="56"]').getBoundingClientRect().width));
+ check('Every projected cell receives taps at its visible center',await desk.locator('.orb-cell').evaluateAll(cells=>cells.every(e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('.orb-cell')===e;})));
  await desk.screenshot({path:path.join(out,'orbit-desktop.png'),fullPage:true});
  let s=(await read(desk)).run,[a,b]=hint(s),before=s.moves;await swap(desk,a,b);s=(await read(desk)).run;check('Two clicks perform exactly one valid exchange',s.moves===before-1&&s.score>0);
  const frozen=JSON.stringify(await read(desk));await desk.reload();await desk.waitForSelector('#orb-grid');check('Reload restores the committed board and progress',JSON.stringify(await read(desk))===frozen);
@@ -38,6 +40,8 @@ try{
 
  let energy=createRun(18,81);energy.energy=36;energy.turn=3;const pulse=await pageFor(energy,undefined,{reduced:true});let saved=(await read(pulse)).run;await pulse.locator('#orb-pulse').click();await pulse.locator('[data-index="27"]').click();await ready(pulse);check('Charged impulse works without spending a turn',(await read(pulse)).run.moves===saved.moves&&(await read(pulse)).run.energy<=36);
  s=(await read(pulse)).run;[a,b]=hint(s);await swap(pulse,a,b);check('Fourth move rotates the next fall direction',(await read(pulse)).run.gravity===1);await pulse.close();
+
+ const resonance=await pageFor(createRun(2,1),{width:390,height:844},{reduced:true});await swap(resonance,45,46);check('Three cascades award and display resonance', (await read(resonance)).run.energy===18&&(await resonance.locator('#orb-event').innerText()).includes('Резонанс'));await resonance.reload();await resonance.waitForSelector('#orb-grid');check('Resonance charge survives reload',(await read(resonance)).run.energy===18);await resonance.close();
 
  const phone=await pageFor(createRun(4,444),{width:390,height:844},{touch:true});check('Phone has no horizontal overflow',await horizontalFit(phone));check('Phone boosters fit on screen',await phone.locator('#orb-hint').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight));await phone.screenshot({path:path.join(out,'orbit-mobile.png'),fullPage:true});
  s=(await read(phone)).run;[a,b]=hint(s);const ba=await phone.locator(`[data-index="${a}"]`).boundingBox(),bb=await phone.locator(`[data-index="${b}"]`).boundingBox(),cdp=await phone.context().newCDPSession(phone);const p1={x:ba.x+ba.width/2,y:ba.y+ba.height/2},p2={x:bb.x+bb.width/2,y:bb.y+bb.height/2};
