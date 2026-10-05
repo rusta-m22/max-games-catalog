@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const target=path.resolve(process.argv[2]||path.join(root,'../deliverables/Ostrova_Kubikov_3D.html'));
+const target=path.resolve(process.argv[2]||path.join(root,'../deliverables/Ostrova_Kubikov_3D_v1_2.html'));
 const temp=await mkdtemp(path.join(os.tmpdir(),'islands-preview-'));
 try{
  const entry=path.join(temp,'entry.js');

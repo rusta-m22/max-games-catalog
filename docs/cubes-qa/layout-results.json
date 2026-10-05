@@ -1,0 +1,56 @@
+{
+  "shapes": [
+    {
+      "shape": 0,
+      "name": "ФОНАРЬ ЖЕЛАНИЙ",
+      "fits": true
+    },
+    {
+      "shape": 1,
+      "name": "ЛУННЫЕ ВОРОТА",
+      "fits": true
+    },
+    {
+      "shape": 2,
+      "name": "СЕРДЦЕ МЕЧТЫ",
+      "fits": true
+    },
+    {
+      "shape": 3,
+      "name": "ПАРЯЩИЕ БАШНИ",
+      "fits": true
+    },
+    {
+      "shape": 4,
+      "name": "НЕФРИТОВАЯ ПИРАМИДА",
+      "fits": true
+    },
+    {
+      "shape": 5,
+      "name": "ЗВЁЗДНЫЙ ЦВЕТОК",
+      "fits": true
+    },
+    {
+      "shape": 6,
+      "name": "ДВОРЕЦ ОБЛАКОВ",
+      "fits": true
+    },
+    {
+      "shape": 7,
+      "name": "КОЛЬЦО РАССВЕТА",
+      "fits": true
+    },
+    {
+      "shape": 8,
+      "name": "КРЫЛЬЯ БАБОЧКИ",
+      "fits": true
+    },
+    {
+      "shape": 9,
+      "name": "ХРУСТАЛЬНЫЙ МОСТ",
+      "fits": true
+    }
+  ],
+  "desktopMouse": true,
+  "errors": []
+}

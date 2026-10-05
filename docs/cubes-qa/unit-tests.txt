@@ -1,0 +1,17 @@
+✔ cubes: every generated layout has an exposed-pair solution, even counts and unique positions (265.913507ms)
+✔ cubes: new games never repeat the previous figure (27.689839ms)
+✔ cubes: same cube toggles off, mismatch changes selection, a pair scores once (0.868717ms)
+✔ cubes: buried cubes cannot be selected and undo restores exact previous pair (1.478204ms)
+✔ cubes: shuffle preserves inventory, clears undo and provides a full solution (2.110926ms)
+✔ cubes: exhausted shuffle charges do not allow extra paid shuffles (0.788336ms)
+✔ cubes: the timer is optional, starts on selection and ends at zero (1.154958ms)
+✔ cubes: completion is recorded once and legacy level is retained separately (1.57556ms)
+✔ cubes: malformed saved games recover safely (1.823734ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.855375

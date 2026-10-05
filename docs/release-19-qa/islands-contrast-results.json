@@ -1,0 +1,31 @@
+{
+  "passed": 25,
+  "checks": [
+    "Colour 1: visible dark contour while dragging (1215 pixels)",
+    "Colour 1: preview does not commit before release",
+    "Colour 1: cancel keeps the saved hand",
+    "Colour 2: visible dark contour while dragging (1197 pixels)",
+    "Colour 2: preview does not commit before release",
+    "Colour 2: cancel keeps the saved hand",
+    "Colour 3: visible dark contour while dragging (1171 pixels)",
+    "Colour 3: preview does not commit before release",
+    "Colour 3: cancel keeps the saved hand",
+    "Colour 4: visible dark contour while dragging (1174 pixels)",
+    "Colour 4: preview does not commit before release",
+    "Colour 4: cancel keeps the saved hand",
+    "Colour 5: visible dark contour while dragging (1183 pixels)",
+    "Colour 5: preview does not commit before release",
+    "Colour 5: cancel keeps the saved hand",
+    "Colour 6: visible dark contour while dragging (1196 pixels)",
+    "Colour 6: preview does not commit before release",
+    "Colour 6: cancel keeps the saved hand",
+    "Coloured line preview still places once and clears the row",
+    "Red crossed preview rejects an occupied position without spending a move",
+    "Touch/Canvas: coloured outlined preview",
+    "Canvas: placement still works",
+    "Mouse/WebGL: coloured outlined preview",
+    "Mouse: placement still works",
+    "No browser exceptions"
+  ],
+  "errors": []
+}

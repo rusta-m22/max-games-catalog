@@ -13,7 +13,7 @@ const center=async locator=>{const r=await locator.boundingBox();return {x:r.x+r
 try{
  const page=await make();check('True WebGL island with 64 accessible cells',await page.getAttribute('#isl-stage','data-renderer')==='webgl'&&await page.locator('.isl-cell').count()===64);
  await page.locator('[data-cell="56"]').tap();check('Occupied cell rejects the figure without a turn',(await read(page)).journey.turn===0);
- const cdp=await page.context().newCDPSession(page),from=await center(page.locator('[data-slot="0"]')),to=await center(page.locator('[data-cell="62"]'));to.y+=48;
+ const cdp=await page.context().newCDPSession(page),from=await center(page.locator('[data-slot="0"]')),to=await center(page.locator('[data-cell="62"]'));to.y+=64;
  async function drag(end){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[to]});await cdp.send('Input.dispatchTouchEvent',{type:end,touchPoints:[]});}
  await drag('touchCancel');check('Cancelled real touch drag preserves the whole hand',(await read(page)).journey.turn===0);
  await drag('touchEnd');await ready(page);let p=await read(page);check('Real touch drag places once and clears the full row',p.journey.turn===1&&p.journey.lines===1&&p.journey.score===130&&p.journey.board.filter(Boolean).length===0);
