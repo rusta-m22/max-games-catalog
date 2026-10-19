@@ -1,0 +1,24 @@
+Nonogram backend 3.1.1. All settings are runtime environment variables.
+With both credentials absent: /health=200; /ready=503; game APIs disabled.
+Partial or malformed credentials/configuration: startup fails without logging values.
+
+Set only in the backend's protected environment:
+VKPLAY_APP_ID = GMRID of the VK Play project
+VKPLAY_SECRET = private VK Play API key (never ship to the client)
+
+VKPLAY_BILLING_ENABLED = false by default; set true only after verifying test billing in the cabinet
+VKPLAY_ITEMDEF_IDS = JSON mapping of all five product names to actual unique positive itemdefid values; required when billing=true
+VKPLAY_PAYMENT_HOSTS = vkplay.ru (exact official hosts only, comma-separated)
+TRUSTED_PROXY_IPS = exact reverse proxy IPs or CIDRs; empty means no trusted forwarded headers
+DATA_DIR = /data (persistent)
+PORT = 8080
+BIND_ADDRESS = 0.0.0.0
+MAX_CONCURRENT_REQUESTS = 32 (1..128), excess connections receive 503
+
+HTTPS is required at the reverse proxy. One backend instance per SQLite database.
+Callback: GET /api/vkplay/callback
+Billing enablement here does NOT switch VK Play to sandbox. Test billing is a separate cabinet setting.
+Do not include query strings, OTP, credentials, signed URLs or authorization headers in proxy logs.
+No .env auto-loader: Amvera injects settings; Docker can use --env-file.
+Check config (no secret values printed): python settings.py --strict
+The check validates format, not acceptance of the real key by VK Play.

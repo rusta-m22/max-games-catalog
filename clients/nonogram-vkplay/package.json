@@ -1,0 +1,23 @@
+{
+  "name": "nonogram-vkplay",
+  "version": "3.2.0",
+  "private": true,
+  "description": "Nonogram Little Worlds \u2014 VK Play Windows client",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "preview": "electron . --preview",
+    "test": "node tools/test.cjs",
+    "build:win": "node tools/build-win.cjs",
+    "test:ui": "node tests/browser.cjs",
+    "test:native": "node tests/electron_smoke.cjs",
+    "configure": "node tools/configure.cjs",
+    "upload:test": "python3 tools/upload-test.py"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "pe-library": "2.0.1",
+    "playwright": "1.51.1",
+    "resedit": "3.1.0"
+  }
+}

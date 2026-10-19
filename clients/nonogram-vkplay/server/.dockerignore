@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!app.py
+!economy_core.py
+!vkplay.py
+!settings.py
+!backup.py
+!smoke_check.py
+!catalog.json
+!content.json
+!extra-content.json

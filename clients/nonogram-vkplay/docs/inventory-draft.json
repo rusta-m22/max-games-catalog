@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "itemdefid": 1001,
+      "type": "item",
+      "name": "500 монет",
+      "name_english": "500 coins",
+      "description": "500 coins",
+      "tradable": false,
+      "marketable": false
+    },
+    {
+      "itemdefid": 1002,
+      "type": "item",
+      "name": "1200 монет",
+      "name_english": "1200 coins",
+      "description": "1200 coins",
+      "tradable": false,
+      "marketable": false
+    },
+    {
+      "itemdefid": 1003,
+      "type": "item",
+      "name": "3000 монет",
+      "name_english": "3000 coins",
+      "description": "3000 coins",
+      "tradable": false,
+      "marketable": false
+    },
+    {
+      "itemdefid": 1004,
+      "type": "item",
+      "name": "7000 монет",
+      "name_english": "7000 coins",
+      "description": "7000 coins",
+      "tradable": false,
+      "marketable": false
+    },
+    {
+      "itemdefid": 1005,
+      "type": "item",
+      "name": "Стартовый набор",
+      "name_english": "Starter pack",
+      "description": "800 coins",
+      "tradable": false,
+      "marketable": false
+    }
+  ]
+}

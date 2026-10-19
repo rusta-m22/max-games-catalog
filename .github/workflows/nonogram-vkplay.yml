@@ -1,0 +1,107 @@
+name: Nonogram VK Play Windows
+
+on:
+  pull_request:
+    paths:
+      - 'clients/nonogram-vkplay/**'
+      - '.github/workflows/nonogram-vkplay.yml'
+  workflow_dispatch:
+    inputs:
+      upload_test:
+        description: 'Upload configured build to VK Play Test (never Live)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nonogram-vkplay-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: clients/nonogram-vkplay
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+        run: npm ci
+      - name: Server, payment and client contracts
+        run: npm test
+      - name: Install test browser
+        run: npx playwright install chromium --only-shell
+      - name: Browser gameplay and local billing simulation
+        run: npm run test:ui
+      - name: Build Windows client
+        run: npm run build:win
+      - name: Launch actual packaged EXE and test Windows saves
+        run: npm run test:native
+      - name: Apply public project parameters
+        if: vars.VKPLAY_GCID != '' && vars.VKPLAY_BACKEND_URL != ''
+        env:
+          VKPLAY_BACKEND_URL: ${{ vars.VKPLAY_BACKEND_URL }}
+          VKPLAY_GCID: ${{ vars.VKPLAY_GCID }}
+        run: |
+          cp evidence/native-windows-report.json evidence/native-windows-preview-report.json
+          npm run configure
+          npm run build:win
+          npm run test:native
+      - name: Archive and verify distribution
+        run: python tools/package.py
+      - name: Windows client files
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: nonogram-vkplay-client
+          path: clients/nonogram-vkplay/dist/Nonogram-VKPlay-win-x64/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Downloadable Windows ZIP
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: nonogram-vkplay-windows-zip
+          path: clients/nonogram-vkplay/deliverables/
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+      - name: Test evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: nonogram-vkplay-evidence
+          path: clients/nonogram-vkplay/evidence/
+          retention-days: 14
+
+  upload-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.upload_test
+    needs: windows
+    runs-on: ubuntu-22.04
+    environment: vkplay-test
+    timeout-minutes: 100
+    defaults:
+      run:
+        working-directory: clients/nonogram-vkplay
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: nonogram-vkplay-client
+          path: clients/nonogram-vkplay/dist/Nonogram-VKPlay-win-x64
+      - name: Upload to Test through official bstool
+        env:
+          VKPLAY_BUILD_TOKEN: ${{ secrets.VKPLAY_BUILD_TOKEN }}
+        run: python3 tools/upload-test.py --execute
+      # Assembly is ephemeral on hosted runners; bstool restores its state from GC.
+      # For large builds, use a private persistent assembly folder; never cache token-bearing logs.

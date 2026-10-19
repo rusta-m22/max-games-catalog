@@ -1,0 +1,3 @@
+'use strict';
+const boot=window.Native.bootstrap();
+document.getElementById('message').textContent=({BUILD_NOT_CONFIGURED:'Это техническая сборка. Проект VK Play и сервер ещё не подключены. Для проверки игры запустите Preview.cmd. Покупки в просмотре недоступны.',START_FROM_GAME_CENTER:'Откройте игру кнопкой «Играть» в VK Play Game Center.',SECURE_STORAGE_UNAVAILABLE:'Не удалось открыть защищённое хранилище сохранений Windows.',RELAUNCH_GAME_CENTER:'Одноразовый ключ уже использован. Запустите игру заново через VK Play Game Center.'})[boot.error]||'Авторизация не завершена. Проверьте подключение и запустите игру заново через VK Play Game Center.';
