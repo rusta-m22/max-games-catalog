@@ -23,6 +23,8 @@ jobs:
   windows:
     runs-on: windows-2022
     timeout-minutes: 25
+    env:
+      PYTHONUTF8: '1'
     defaults:
       run:
         working-directory: clients/nonogram-vkplay

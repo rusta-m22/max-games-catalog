@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse,parse_qs
 ROOT=Path(__file__).resolve().parent
-CAT=json.loads((ROOT/'catalog.json').read_text());DATA=json.loads((ROOT/'content.json').read_text())
+CAT=json.loads((ROOT/'catalog.json').read_text(encoding='utf-8'));DATA=json.loads((ROOT/'content.json').read_text(encoding='utf-8'))
 LEVELS={p['id']:p for p in DATA['levels']};ITEMS={p['id']:p for p in CAT['items']};PRODUCTS={p['id']:p['coins'] for p in CAT['products']}
 CAMPAIGN=[p for p in DATA['levels'] if p['type'] not in ('mega','bonus')]
 QUESTS=['three','colour','perfect','pure','ranked']

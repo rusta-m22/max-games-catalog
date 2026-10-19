@@ -2,7 +2,7 @@
   "name": "nonogram-vkplay",
   "version": "3.2.0",
   "private": true,
-  "description": "Nonogram Little Worlds \u2014 VK Play Windows client",
+  "description": "Nonogram Little Worlds — VK Play Windows client",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -17,7 +17,7 @@
   "devDependencies": {
     "electron": "44.7.0",
     "pe-library": "2.0.1",
-    "playwright": "1.51.1",
+    "playwright": "1.64.1",
     "resedit": "3.1.0"
   }
 }

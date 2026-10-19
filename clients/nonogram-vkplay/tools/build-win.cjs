@@ -63,6 +63,7 @@ async function build() {
   function walk(dir) {
     for (const entry of fs.readdirSync(dir,{withFileTypes:true})) {
       const file=path.join(dir,entry.name);
+      if (entry.name.startsWith('.')) {fs.rmSync(file,{recursive:true,force:true});continue;}
       if (entry.isSymbolicLink()) throw new Error('SYMLINK_IN_DISTRIBUTION');
       if (entry.isDirectory()) walk(file);
       else {

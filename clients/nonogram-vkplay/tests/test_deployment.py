@@ -170,6 +170,7 @@ class Deployment(unittest.TestCase):
 
 
 class Lifecycle(unittest.TestCase):
+    @unittest.skipIf(os.name == 'nt', 'Graceful SIGTERM is a Linux hosting contract; Windows terminate uses TerminateProcess')
     def test_process_starts_without_vk_credentials_and_stops_on_sigterm(self):
         with tempfile.TemporaryDirectory() as directory:
             with socket.socket() as reserved:

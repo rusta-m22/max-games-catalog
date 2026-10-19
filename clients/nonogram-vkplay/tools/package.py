@@ -7,7 +7,7 @@ SOURCE=ROOT/'dist/Nonogram-VKPlay-win-x64'
 OUT=ROOT/'deliverables'
 OUT.mkdir(exist_ok=True)
 version=json.loads((ROOT/'package.json').read_text())['version']
-files=sorted(p for p in SOURCE.rglob('*') if p.is_file())
+files=sorted(p for p in SOURCE.rglob('*') if p.is_file() and not any(s.startswith('.') for s in p.relative_to(SOURCE).parts))
 assert files and len(files)<=1000
 for item in json.loads((SOURCE/'FILES-SHA256.json').read_text()):
     p=SOURCE/item['path']
