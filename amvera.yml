@@ -1,15 +1,9 @@
 meta:
-  environment: nodejs
+  environment: docker
   toolchain:
-    name: npm
-    version: "22"
+    name: docker
 build:
-  skip: true
-  artifacts:
-    "*": /
+  dockerfile: Dockerfile
 run:
-  scriptName: amvera-start.mjs
+  containerPort: 8080
   persistenceMount: /data
-  containerPort: "8080"
-  singleton: false
-  zeroDowntime: true
