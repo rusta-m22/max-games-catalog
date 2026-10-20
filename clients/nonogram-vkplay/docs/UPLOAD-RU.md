@@ -29,7 +29,7 @@ GameUICurrencyParam=-my_ui_currency_arg=
 
 После включения подготовленного workflow на основной ветке:
 
-1. Repository → Settings → Secrets and variables → Actions → Variables: `VKPLAY_BACKEND_URL` — HTTPS-адрес сервера с `/` в конце; `VKPLAY_GCID` — GCID.
+1. Публичные параметры действующего проекта уже заданы в workflow: Miami backend и GCID 0.2046788. Для другого проекта их можно переопределить через Repository → Settings → Secrets and variables → Actions → Variables: `VKPLAY_BACKEND_URL` — HTTPS-адрес с `/` в конце; `VKPLAY_GCID` — GCID.
 2. В Secrets добавьте `VKPLAY_BUILD_TOKEN`. Его берут в разделе «Дистрибутивы» под аккаунтом с ролью build manager. Не добавляйте сюда Secret for Game API: он нужен только Amvera.
 3. Actions → Nonogram VK Play Windows → Run workflow. Без галочки `upload_test` получатся только сборка и проверки. С галочкой настроенный клиент загрузится в **Test** через официальный bstool.
 4. Проверьте, что в «Дистрибутивах» действительно появилась новая Test-сборка. На Windows войдите в Game Center тем же аккаунтом и переключите игру на Test.
@@ -38,7 +38,7 @@ Workflow не переводит Test в Live. При каждой загруз�
 
 ## Вариант с обычным загрузчиком
 
-Официальная утилита Windows: https://static.gc.vkplay.ru/guptools/win64.zip . Запустите GameCenterUploader.exe, выберите папку настроенного клиента и отдельную папку Assembly. Вставьте токен в поле Authorization token, нажмите Check the token → Start to Assemble. Это также загружает в Test. Пользоваться нужно настроенной пересобранной версией, не текущим preview.
+Официальная утилита Windows: https://static.gc.vkplay.ru/guptools/win64.zip . Запустите GameCenterUploader.exe, выберите папку настроенного клиента и отдельную папку Assembly. Вставьте токен в поле Authorization token, нажмите Check the token → Start to Assemble. Это также загружает в Test. Пользоваться нужно настроенной пересобранной версией, не исходным ненастроенным preview.
 
 ## Перед выпуском
 

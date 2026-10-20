@@ -8,7 +8,7 @@ const name = x => x.name[Game.lang === 'ru' ? 0 : 1];
 const id = () => crypto.randomUUID?.() || Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 const base = window.Native?.bootstrap().authorized ? 'native' : '';
 let token='', userId='', epoch=0, connecting=null, catalog=[], wallet=null;
-let busy=false, flushing=null, purchaseBusy=false, rankKind='daily', category='hint', lastBoard=null;
+let busy=false, flushing=null, purchaseBusy=false, checkoutRetry=null, rankKind='daily', category='hint', lastBoard=null;
 const G=()=>window.Game, B=(text,action,attrs='',cls='primary')=>Game.button(text,action,cls,attrs);
 function data(){const s=Game.state; s.economy ??= {}; const e=s.economy;
  e.version=2;e.owned??={};e.hintCredits??={cell:s.hints||0,empty:0,fix:0,row:0,column:0};e.outbox??=[];e.localOps??=[];e.cosmetics??={};e.questClaims??={};e.pendingHints??=[];return e;}
@@ -45,10 +45,27 @@ E.restore=function(){if(!token)return Promise.resolve();if(restoring)return rest
  const e=data();e.pendingOrders??=[];const n=e.pendingOrders.length,orders=Array.from({length:Math.min(n,4)},(_,i)=>e.pendingOrders[(pendingCursor+i)%n]);pendingCursor=n?(pendingCursor+orders.length)%n:0;
  for(const order of orders){const result=await request('/api/vkplay/order?id='+encodeURIComponent(order));applyWallet(result.wallet);if(result.order.status==='paid')e.pendingOrders=e.pendingOrders.filter(x=>x!==order);}durable();})().finally(()=>restoring=null);return restoring;};
 function watchPayments(){clearInterval(paymentPoll);let count=0;paymentPoll=setInterval(async()=>{try{const before=[...data().pendingOrders];await E.restore();if(before.some(x=>!data().pendingOrders.includes(x))){Game.toast(tr('Оплата подтверждена. Монеты начислены.','Payment confirmed. Coins credited.'));refresh();}if(!data().pendingOrders.length)clearInterval(paymentPoll);}catch(_){}if(++count>=30)clearInterval(paymentPoll);},5000);}
+function purchaseError(result){const error=new Error(result.error);error.status=result.status;return error;}
+function showCheckoutRetry(product,requestId){const repeatable=!D.products.find(p=>p.id===product)?.once;checkoutRetry={product,requestId,uid:userId};Game.showModal(`<p class="eyebrow">${tr('ПОКУПКА МОНЕТ','COIN PURCHASE')}</p><h2>${tr('Окно оплаты не открылось','Checkout did not open')}</h2><p>${tr('Подтверждение этой покупки пока не получено. Если ты уже завершал оплату, сначала проверь баланс.','This purchase has not been confirmed yet. If you already completed payment, check your balance first.')}</p><p>${repeatable?tr('Если оплату не завершал, можно начать новую попытку. Перед этим игра ещё раз проверит прежнюю покупку.','If you have not completed payment, you can start a new attempt. The game will check the previous purchase once more first.'):tr('Стартовый набор можно купить один раз. Дождись подтверждения прежней покупки или обратись в поддержку игры.','The starter pack can be purchased once. Wait for the previous purchase to be confirmed or contact game support.')}</p>${B(tr('Проверить баланс','Check balance'),'eco-check-payment','','ghost')}${repeatable?B(tr('Новая попытка','New attempt'),'eco-retry-checkout'):''}${B(tr('Закрыть','Close'),'close','','ghost')}`);}
+async function recordCheckout(product,result){const e=data();e.pendingOrders??=[];if(!e.pendingOrders.includes(result.orderId))e.pendingOrders.push(result.orderId);delete e.purchaseRequests[product];durable();
+ if(result.status==='paid'){await E.restore();Game.toast(tr('Оплата подтверждена. Баланс обновлён.','Payment confirmed. Balance updated.'));refresh();}
+ else{Game.toast(tr('Оплата открыта в VK Play. Баланс обновится после подтверждения.','VK Play checkout opened. Coins arrive after payment confirmation.'));watchPayments();}}
 async function buyProduct(product){if(purchaseBusy)return;await requireOnline();if(!catalog.some(p=>p.id===product&&p.available))throw new Error('NETWORK');purchaseBusy=true;
- try{const e=data();e.purchaseRequests??={};const requestId=e.purchaseRequests[product]||id();e.purchaseRequests[product]=requestId;durable();const r=await window.Native.purchase(product,requestId);if(!r.ok){if(r.error==='VKPLAY_BILLING_REJECTED'){delete e.purchaseRequests[product];durable();}const error=new Error(r.error);error.status=r.status;throw error;}
- e.pendingOrders??=[];if(!e.pendingOrders.includes(r.value.orderId))e.pendingOrders.push(r.value.orderId);delete e.purchaseRequests[product];durable();Game.toast(tr('Оплата открыта в VK Play. Баланс обновится после подтверждения.','VK Play checkout opened. Coins arrive after payment confirmation.'));watchPayments();
+ try{const e=data();e.purchaseRequests??={};const requestId=e.purchaseRequests[product]||id();e.purchaseRequests[product]=requestId;durable();const r=await window.Native.purchase(product,requestId);if(!r.ok){if(r.error==='VKPLAY_BILLING_REJECTED'){delete e.purchaseRequests[product];durable();}if(['ORDER_STATUS_UNKNOWN','UNEXPECTED_PAYMENT_HOST'].includes(r.error)){showCheckoutRetry(product,requestId);return;}throw purchaseError(r);}
+ await recordCheckout(product,r.value);
  }finally{purchaseBusy=false;}}
+async function beginCheckoutRetry(){if(purchaseBusy||!checkoutRetry)return;await requireOnline();const retry=checkoutRetry,e=data();
+ if(D.products.find(p=>p.id===retry.product)?.once)throw new Error('ORDER_STATUS_UNKNOWN');
+ if(retry.uid!==userId||e.userId!==retry.uid||e.purchaseRequests?.[retry.product]!==retry.requestId)throw new Error('ACCOUNT_CHANGED');
+ if(!catalog.some(p=>p.id===retry.product&&p.available))throw new Error('NETWORK');purchaseBusy=true;
+ try{const previous=await window.Native.purchase(retry.product,retry.requestId);
+  if(previous.ok){checkoutRetry=null;Game.closeModal();await recordCheckout(retry.product,previous.value);return;}
+  if(!['ORDER_STATUS_UNKNOWN','VKPLAY_BILLING_REJECTED'].includes(previous.error))throw purchaseError(previous);
+  // Explicit user action only. The old server order is kept for late receipts.
+  delete e.purchaseRequests[retry.product];try{durable();}catch(error){e.purchaseRequests[retry.product]=retry.requestId;throw error;}
+  checkoutRetry=null;Game.closeModal();
+ }finally{purchaseBusy=false;}
+ await buyProduct(retry.product);}
 E.owned=id=>!!data().owned[id];
 E.worldOpen=w=>NonoCore.worldOpen(Game.state,w)||E.owned('world_'+w)||D.items.some(i=>i.world===w&&E.owned(i.id));
 E.unlock=p=>p.type==='ranked'||p.type==='bonus'&&E.owned(p.pack)||p.type==='mega'&&E.owned('mega_'+p.mega)||p.type==='secret'&&E.owned('secret_'+p.world+'_'+(p.index-24))||p.type==='normal'&&(E.owned('size_'+p.n)||E.owned('world_'+p.world)||E.owned('chapter_'+p.world+'_'+Math.floor(p.index/6)));
@@ -108,6 +125,8 @@ document.addEventListener('click',async event=>{const el=event.target.closest('[
  if(actionName==='eco-category'){category=key;E.renderShop();}
  else if(actionName==='eco-connect'){await E.connect(true);if(data().rankPending)await submitRanked(data().rankPending);refresh();}
  else if(actionName==='eco-product')await buyProduct(key);
+ else if(actionName==='eco-retry-checkout')await beginCheckoutRetry();
+ else if(actionName==='eco-check-payment'){await requireOnline();await E.restore();Game.toast(tr('Баланс обновлён','Balance updated'));}
  else if(actionName==='eco-restore'){await requireOnline();await E.restore();Game.toast(tr('Покупки проверены','Purchases checked'));refresh();}
  else if(actionName==='eco-buy')await buyItem(key);
  else if(actionName==='eco-hint')await useHint(key);

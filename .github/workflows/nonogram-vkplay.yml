@@ -81,10 +81,9 @@ jobs:
       - name: Launch actual packaged EXE and test Windows saves
         run: npm run test:native
       - name: Apply public project parameters
-        if: vars.VKPLAY_GCID != '' && vars.VKPLAY_BACKEND_URL != ''
         env:
-          VKPLAY_BACKEND_URL: ${{ vars.VKPLAY_BACKEND_URL }}
-          VKPLAY_GCID: ${{ vars.VKPLAY_GCID }}
+          VKPLAY_BACKEND_URL: ${{ vars.VKPLAY_BACKEND_URL || 'https://nonogram-miami-rustamr22.mia0.amvera.tech/' }}
+          VKPLAY_GCID: ${{ vars.VKPLAY_GCID || '0.2046788' }}
         run: |
           cp evidence/native-windows-report.json evidence/native-windows-preview-report.json
           npm run configure
