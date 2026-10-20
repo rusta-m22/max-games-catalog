@@ -161,9 +161,33 @@ class CheckoutHTTP(unittest.TestCase):
             self.order()
         self.assertEqual(failure.exception.code, 'UNEXPECTED_PAYMENT_HOST')
         self.assertIn('payment_url_not_allowed', '\n'.join(logs.output))
-        self.assertNotIn('unapproved.example', '\n'.join(logs.output))
+        self.assertIn('scheme=https host=unapproved.example port=default userinfo=0', '\n'.join(logs.output))
         self.assertNotIn('private-payment-token', '\n'.join(logs.output))
         self.assertEqual(self.state(), 'unknown')
+
+    def test_url_diagnostics_identify_format_without_logging_private_components(self):
+        cases = (
+            (None, 'value_type=missing'),
+            ({'private-value': 'private-token'}, 'value_type=object'),
+            ('/private-path?private-token', 'scheme=none host=none'),
+            ('http://vkplay.ru/private-path?private-token', 'scheme=http host=vkplay.ru'),
+            ('https://private-user:private-password@vkplay.ru:444/private-path?private-token#private-fragment', 'host=vkplay.ru port=444 userinfo=1'),
+            ('https://vkplay.ru:invalid/private-path?private-token', 'host=vkplay.ru port=invalid'),
+            ('https://[invalid/private-path?private-token', 'format=invalid'),
+            ('https://bad%0ahost/private-path?private-token', 'host=invalid'),
+        )
+        for index, (value, expected) in enumerate(cases):
+            with self.subTest(index=index):
+                self.response(200, {'status': 'ok', 'url': value})
+                with self.assertLogs(level='WARNING') as logs, self.assertRaises(Error) as failure:
+                    self.order(request='url-format-' + str(index))
+                output = '\n'.join(logs.output)
+                self.assertEqual(failure.exception.code, 'UNEXPECTED_PAYMENT_HOST')
+                self.assertIn(expected, output)
+                self.assertNotIn('private-', output)
+                self.assertNotIn('bad%0a', output)
+                self.assertEqual(self.state(), 'unknown')
+        self.assertEqual(self.balance(), 120)
 
     def test_network_diagnostics_never_include_exception_url_or_request_values(self):
         upstream = 'https://vkplay.ru/app/12345/billing/item/client?sign=private-signature'
