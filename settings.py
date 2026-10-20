@@ -12,6 +12,15 @@ class ConfigurationError(ValueError):
     pass
 
 
+def unique_items(pairs):
+    values = {}
+    for key, value in pairs:
+        if key in values:
+            raise ValueError('Duplicate product key')
+        values[key] = value
+    return values
+
+
 @dataclass
 class Settings:
     app_id: str = ''
@@ -64,7 +73,13 @@ def load_settings(env=None):
     raw_ids = env.get('VKPLAY_ITEMDEF_IDS', '')
     if raw_ids:
         try:
-            item_ids = json.loads(raw_ids)
+            if raw_ids.lstrip().startswith('{'):
+                item_ids = json.loads(raw_ids, object_pairs_hook=unique_items)
+            else:
+                pairs = [pair.strip().split('=') for pair in raw_ids.split(',')]
+                if any(len(pair) != 2 for pair in pairs):
+                    raise ValueError()
+                item_ids = unique_items((key.strip(), value.strip()) for key, value in pairs)
             required = {'coins_500', 'coins_1200', 'coins_3000', 'coins_7000', 'starter'}
             if not isinstance(item_ids, dict) or set(item_ids) != required:
                 raise ValueError()
@@ -74,7 +89,7 @@ def load_settings(env=None):
             if len(set(item_ids.values())) != len(required):
                 raise ValueError()
         except (ValueError, TypeError):
-            raise ConfigurationError('VKPLAY_ITEMDEF_IDS: expected a complete JSON mapping of five products to unique positive itemdefid values') from None
+            raise ConfigurationError('VKPLAY_ITEMDEF_IDS: expected all five products as JSON or comma-separated product=id pairs, with unique positive itemdefid values') from None
     if billing == 'true' and (not app_id or not item_ids):
         raise ConfigurationError('Billing requires VKPLAY_APP_ID, VKPLAY_SECRET and VKPLAY_ITEMDEF_IDS')
     return Settings(app_id=app_id, secret=secret, billing_enabled=billing == 'true',
