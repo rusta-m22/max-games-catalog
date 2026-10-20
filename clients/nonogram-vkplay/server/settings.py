@@ -26,7 +26,7 @@ class Settings:
     app_id: str = ''
     secret: str = field(default='', repr=False)
     billing_enabled: bool = False
-    payment_hosts: tuple = ('vkplay.ru',)
+    payment_hosts: tuple = ('vkplay.ru', 'co.vkpay.ru')
     trusted_proxies: str = ''
     item_ids: dict = field(default_factory=dict)
     data_dir: Path = Path('./data')
@@ -59,7 +59,7 @@ def load_settings(env=None):
         raise ConfigurationError('VKPLAY_APP_ID and VKPLAY_SECRET must both be set, or both absent')
     if app_id and (not re.fullmatch(r'[1-9][0-9]{0,15}', app_id) or len(secret) < 16):
         raise ConfigurationError('VKPLAY_APP_ID or VKPLAY_SECRET is invalid')
-    hosts = tuple(x.strip().lower() for x in env.get('VKPLAY_PAYMENT_HOSTS', 'vkplay.ru').split(','))
+    hosts = tuple(x.strip().lower() for x in env.get('VKPLAY_PAYMENT_HOSTS', 'vkplay.ru,co.vkpay.ru').split(','))
     if any(not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?', x) or '.' not in x or '..' in x for x in hosts):
         raise ConfigurationError('VKPLAY_PAYMENT_HOSTS: use exact domain names, no URLs or wildcard')
     trusted = env.get('TRUSTED_PROXY_IPS', '')

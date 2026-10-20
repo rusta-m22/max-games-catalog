@@ -10,7 +10,7 @@ UPSTREAM={'timeout':False}
 def transport(method,url,data=None):
  if '/gas?' in url:return {'status':'ok'}
  if UPSTREAM['timeout']:raise TimeoutError('local fixture checkout timeout')
- return {'status':'ok','url':'https://vkplay.ru/test-only-checkout'}
+ return {'status':'ok','url':'https://co.vkpay.ru/test-only-checkout?order=fixture%2F123&lang=ru'}
 class FixtureHandler(Handler):
  def do_POST(self):
   if self.path!='/test/checkout-mode':return super().do_POST()

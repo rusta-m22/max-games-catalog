@@ -13,7 +13,7 @@ for (let i=0;i<args.length;i+=2) {
 const backendUrl=flags['--backend']||process.env.VKPLAY_BACKEND_URL;
 const gcid=flags['--gcid']||process.env.VKPLAY_GCID;
 try {
-  const config={backendUrl,gcid,paymentHosts:['vkplay.ru'],releaseConfigured:true};
+  const config={backendUrl,gcid,paymentHosts:['vkplay.ru','co.vkpay.ru'],releaseConfigured:true};
   checkConfig(config);
   fs.writeFileSync(path.join(__dirname,'../desktop/config.json'),JSON.stringify(config,null,2)+'\n');
   console.log('Public client configuration saved. Rebuild the client before uploading.');

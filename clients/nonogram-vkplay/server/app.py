@@ -7,7 +7,7 @@ from economy_core import EconomyStore, Error, CAT, dump
 from vkplay import VKPlay, BillingRejected, valid_signature, ipv4
 from settings import load_settings, ConfigurationError
 PRODUCTS={p['id']:p for p in CAT['products']}
-VERSION='3.2.3-vkplay-server'
+VERSION='3.2.4-vkplay-server'
 
 class Store(EconomyStore):
  def __init__(self,path,api,billing_enabled=False,clock=None,products=None):

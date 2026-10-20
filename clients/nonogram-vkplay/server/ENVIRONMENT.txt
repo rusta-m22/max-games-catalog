@@ -1,4 +1,4 @@
-Nonogram backend 3.2.3. All settings are runtime environment variables.
+Nonogram backend 3.2.4. All settings are runtime environment variables.
 With both credentials absent: /health=200; /ready=503; game APIs disabled.
 Partial or malformed credentials/configuration: startup fails without logging values.
 
@@ -10,7 +10,7 @@ VKPLAY_BILLING_ENABLED = false by default; set true only after verifying test bi
 VKPLAY_ITEMDEF_IDS = complete mapping of all five products to unique positive itemdefid values; required when billing=true
 Amvera-friendly format (no quotes): coins_500=2001,coins_1200=2002,coins_3000=2003,coins_7000=2004,starter=2005
 JSON mappings remain supported. These example IDs must be replaced with the actual VK Play itemdefid values.
-VKPLAY_PAYMENT_HOSTS = vkplay.ru (exact official hosts only, comma-separated)
+VKPLAY_PAYMENT_HOSTS = vkplay.ru,co.vkpay.ru (exact hosts only; VK Play + observed VK Pay checkout)
 TRUSTED_PROXY_IPS = exact reverse proxy IPs or CIDRs; empty means no trusted forwarded headers
 DATA_DIR = /data (persistent)
 PORT = 8080

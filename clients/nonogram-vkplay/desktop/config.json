@@ -1,6 +1,9 @@
 {
   "backendUrl": "",
   "gcid": "",
-  "paymentHosts": ["vkplay.ru"],
+  "paymentHosts": [
+    "vkplay.ru",
+    "co.vkpay.ru"
+  ],
   "releaseConfigured": false
 }

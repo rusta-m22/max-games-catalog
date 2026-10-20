@@ -35,6 +35,11 @@ class Configuration(unittest.TestCase):
         self.assertFalse(c.configured)
         self.assertFalse(c.billing_enabled)
 
+    def test_exact_vkpay_checkout_default_and_explicit_override(self):
+        self.assertEqual(load_settings({}).payment_hosts, ('vkplay.ru', 'co.vkpay.ru'))
+        self.assertEqual(load_settings({'VKPLAY_PAYMENT_HOSTS': 'vkplay.ru'}).payment_hosts, ('vkplay.ru',))
+        self.assertEqual(load_settings({'VKPLAY_PAYMENT_HOSTS': 'vkplay.ru,co.vkpay.ru'}).payment_hosts, ('vkplay.ru', 'co.vkpay.ru'))
+
     def test_partial_credentials_fail(self):
         for env in ({'VKPLAY_APP_ID': '12345'}, {'VKPLAY_SECRET': SECRET}):
             with self.assertRaises(ConfigurationError): load_settings(env)
