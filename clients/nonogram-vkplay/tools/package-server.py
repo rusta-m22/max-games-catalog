@@ -1,15 +1,17 @@
 """Produce the standalone deployable backend from the current source version."""
-import hashlib,json,zipfile
+import hashlib,json,re,zipfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'deliverables';OUT.mkdir(exist_ok=True)
-version=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
+match=re.search(r"^VERSION=['\"]([0-9]+\.[0-9]+\.[0-9]+)-vkplay-server['\"]$",(ROOT/'server/app.py').read_text(encoding='utf-8'),re.M)
+if not match:raise ValueError('Missing backend version')
+version=match.group(1)
 entries=[]
 for p in sorted((ROOT/'server').rglob('*')):
     if p.is_file() and '__pycache__' not in p.parts and p.suffix not in {'.pyc','.sqlite3','.db'} and p.name!='.env':
         entries.append((p,p.relative_to(ROOT/'server').as_posix()))
-for name in ('test_payments.py','test_deployment.py','test_checkout_recovery.py'):
+for name in ('test_payments.py','test_deployment.py','test_checkout_recovery.py','test_transport.py'):
     entries.append((ROOT/'tests'/name,'tests/'+name))
 for name in ('SANDBOX-CHECKLIST.md','SERVER-STATUS-RU.md'):
     entries.append((ROOT/'docs'/name,name))
