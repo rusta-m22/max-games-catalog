@@ -1,55 +1,143 @@
 {
   "date": "2026-10-20",
-  "sourceCommit": "b21c14d6a6912368563e9efa31a29be0ca2f4d71",
-  "backendCommit": "bb45156e72bf1bfba4a93c6a0f2ab2bf5efe98f6",
-  "ciRun": 39418203465,
+  "sourceCommit": "b44ede6b740edd1c5616d7350086cff37c0b5b74",
+  "ciRun": 39461965930,
   "ciResult": "success",
-  "observedCheckoutOrigin": "https://co.vkpay.ru",
   "pythonFull": 83,
-  "pythonStandaloneZip": 80,
-  "node": 19,
+  "nodeLinux": 28,
+  "nodeWindows": 28,
   "browserEmulatedScenarios": 14,
   "windowsExeTested": true,
-  "configuredClientVerified": true,
-  "deployedBackendVersion": "3.2.3-vkplay-server",
-  "preparedBackendVersion": "3.2.4-vkplay-server",
-  "requiredRuntimeSetting": {
-    "VKPLAY_PAYMENT_HOSTS": "vkplay.ru,co.vkpay.ru"
+  "gclayNativeLocalFixtureTested": true,
+  "configuredClientGuardTested": true,
+  "publicClientConfig": {
+    "backendUrl": "https://nonogram-miami-rustamr22.mia0.amvera.tech/",
+    "gcid": "0.2046788",
+    "paymentHosts": [
+      "vkplay.ru",
+      "co.vkpay.ru"
+    ],
+    "releaseConfigured": true
   },
-  "health": 200,
-  "ready": 200,
-  "unauthenticatedWallet": 401,
   "realVKPlayOverlayTested": false,
   "realVKPlayTransactionsTested": false,
-  "testClient322Uploaded": false,
+  "client323UploadedToTest": false,
   "productionPublished": false,
+  "realMoneyOperationsPerformed": false,
+  "backendChangedThisFix": false,
+  "buildVerificationLocation": "GitHub Actions Windows runner; local execution environment unavailable",
   "windows": {
-    "file": "Nonogram-VKPlay-Windows-x64-3.2.2.zip",
-    "bytes": 176502736,
-    "sha256": "ee12fc435a56b7ccfc0d29d1fc9272d1dbff86ae37ee561d1bcc64db750baaaf",
+    "file": "Nonogram-VKPlay-Windows-x64-3.2.3.zip",
+    "bytes": 176561883,
+    "sha256": "a2d526ab776199416fd822e7dde1f11cba6bda01a0dedfe2fdbb2b6f28e0709d",
     "crcVerified": true,
-    "fileCount": 312,
+    "fileCount": 314,
     "build": {
-      "version": "3.2.2",
+      "version": "3.2.3",
       "electron": "44.7.0",
       "platform": "win32",
       "arch": "x64",
       "releaseConfigured": true,
       "codeSigned": false,
       "brandedResources": true,
+      "nativeGCLayBridge": true,
       "vendorArchiveSHA256": "eee30dc8fa1f5ea95490e59f44e46ea68dd24c6e93d22facf70fe5c2d4c2665c",
       "vendorExeSHA256": "2529b494f4123f152bce346051f7bd855ef95006424a561953cf17c49a3d1ba8",
-      "exeSHA256": "6cdbc6b7802c02f0165e13ec41e0d97679ffb72883cb54799e835695339a7376",
+      "exeSHA256": "8c27ee967b1356bb687b76acb5a1aff33f5d74d8e5a69b4f3e7b912ed162ccbc",
       "realVKPlaySandboxTested": false
     }
   },
-  "server": {
-    "file": "Nonogram-VKPlay-Server-Amvera-3.2.4.zip",
-    "version": "3.2.4",
-    "bytes": 109871,
-    "sha256": "3f32c6e21b026315d8fdaa231149cefc223ec36d780b4a62600b9fef48837f5f",
-    "crcVerified": true,
+  "previewWindows": {
+    "environment": "Packaged Windows application; no real VK Play requests",
+    "platform": "win32",
+    "windows": "10.0.20348",
+    "checks": [
+      "Direct EXE launch is guarded; purchases cannot bypass authorization",
+      "Packaged native addon: local fixture verifies packed x64 ABI, URL preservation, missing DLL, disconnect, rejection and acceptance; real VK Play NOT tested",
+      "Packaged EXE boots; isolated renderer and Windows DPAPI roundtrip pass",
+      "First puzzle solved through native mouse input; completion and reward recorded",
+      "Hint purchase, RU/EN, disabled real-money checkout and restart persistence pass"
+    ],
+    "errors": [],
+    "passed": true,
     "realVKPlaySandboxTested": false,
-    "deployed": false
-  }
+    "exeSHA256": "8c27ee967b1356bb687b76acb5a1aff33f5d74d8e5a69b4f3e7b912ed162ccbc",
+    "gclayNativeFixtureTested": true
+  },
+  "configuredWindows": {
+    "environment": "Packaged Windows application; no real VK Play requests",
+    "platform": "win32",
+    "windows": "10.0.20348",
+    "checks": [
+      "Direct EXE launch is guarded; purchases cannot bypass authorization",
+      "Preview flag cannot bypass a configured release"
+    ],
+    "errors": [],
+    "passed": true,
+    "realVKPlaySandboxTested": false,
+    "exeSHA256": "8c27ee967b1356bb687b76acb5a1aff33f5d74d8e5a69b4f3e7b912ed162ccbc"
+  },
+  "previousBackendEvidence": {
+    "sourceCommit": "bb45156e72bf1bfba4a93c6a0f2ab2bf5efe98f6",
+    "deployedVersionLastObserved": "3.2.3-vkplay-server",
+    "preparedArchive": {
+      "file": "Nonogram-VKPlay-Server-Amvera-3.2.4.zip",
+      "version": "3.2.4",
+      "bytes": 109871,
+      "sha256": "3f32c6e21b026315d8fdaa231149cefc223ec36d780b4a62600b9fef48837f5f",
+      "crcVerified": true,
+      "realVKPlaySandboxTested": false,
+      "deployed": false
+    },
+    "standaloneTestsPreviouslyPassed": 80,
+    "healthPreviouslyObserved": 200,
+    "readyPreviouslyObserved": 200,
+    "unauthenticatedWalletPreviouslyObserved": 401,
+    "recheckedThisTurn": false
+  },
+  "downloads": [
+    {
+      "name": "nonogram-vkplay-contract-evidence",
+      "id": 12283407157,
+      "bytes": 245146,
+      "sha256": "sha256:8552f4ae277390b39491e37c4d3e8130985b84be236462cce173afa514aab89b",
+      "expiresAt": "2026-11-03T16:58:32Z",
+      "url": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930/artifacts/12283407157"
+    },
+    {
+      "name": "nonogram-vkplay-evidence",
+      "id": 12283357538,
+      "bytes": 68593,
+      "sha256": "sha256:53613cde1b2dc6981f85201c0832c3eeea7863030e8ecc4efef26777e67d5417",
+      "expiresAt": "2026-11-03T17:00:30Z",
+      "url": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930/artifacts/12283357538"
+    },
+    {
+      "name": "nonogram-vkplay-windows-zip",
+      "id": 12282324110,
+      "bytes": 176562948,
+      "sha256": "sha256:6aa0af72073648b868766887b5d02023f07d3c18c26fad8a9e56af200f0eab12",
+      "expiresAt": "2026-11-03T17:00:26Z",
+      "url": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930/artifacts/12282324110"
+    },
+    {
+      "name": "nonogram-vkplay-client",
+      "id": 12282134596,
+      "bytes": 179855772,
+      "sha256": "sha256:b491e5707cb9bb8ea6f0d7f8bf03183c920058d23f073cdc53ab82d41d1f4cf9",
+      "expiresAt": "2026-11-03T17:00:12Z",
+      "url": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930/artifacts/12282134596"
+    }
+  ],
+  "remaining": [
+    "Upload 3.2.3 to VK Play Test",
+    "Verify actual GCLay overlay and default dimensions/HiDPI",
+    "Official test checkout and signed callback credit exactly once",
+    "Platform cancellation/failure without credit; restart persistence"
+  ],
+  "documentation": [
+    "https://documentation.vkplay.ru/f2p_vkp/f2pc_overlay_vkp",
+    "https://documentation.vkplay.ru/hotbox/devdocs/documents/gcdoc/2/GCLay.h",
+    "https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules"
+  ]
 }
