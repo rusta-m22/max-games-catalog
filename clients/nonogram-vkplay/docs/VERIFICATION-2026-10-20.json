@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-20",
+  "sourceCommit": "6a77e5531c84e1d23096b7f04b6b19ac23bc1631",
+  "mainCommit": "155e1e48ed40825403bff444543653ca4639c74f",
+  "backendCommit": "6abe52b8c89c6dab1172656837e42cdae06a1676",
+  "ciRun": 39413852616,
+  "ciResult": "success",
+  "pythonFull": 80,
+  "pythonStandaloneZip": 77,
+  "node": 17,
+  "browserEmulatedScenarios": 14,
+  "windowsExeTested": true,
+  "configuredClientVerified": true,
+  "deployedBackendVersion": "3.2.2-vkplay-server",
+  "preparedBackendVersion": "3.2.3-vkplay-server",
+  "health": 200,
+  "ready": 200,
+  "unauthenticatedWallet": 401,
+  "invalidCallbackSignatureRejected": true,
+  "realVKPlayOverlayTested": false,
+  "realVKPlayTransactionsTested": false,
+  "testClient321Uploaded": false,
+  "productionPublished": false,
+  "windows": {
+    "file": "Nonogram-VKPlay-Windows-x64-3.2.1.zip",
+    "bytes": 176502733,
+    "sha256": "8ebd0960d455ccddb1ed9a9fcfd6354e115c8d3e13318c4b7fd7bb1412887703",
+    "crcVerified": true,
+    "fileCount": 312,
+    "build": {
+      "version": "3.2.1",
+      "electron": "44.7.0",
+      "platform": "win32",
+      "arch": "x64",
+      "releaseConfigured": true,
+      "codeSigned": false,
+      "brandedResources": true,
+      "vendorArchiveSHA256": "eee30dc8fa1f5ea95490e59f44e46ea68dd24c6e93d22facf70fe5c2d4c2665c",
+      "vendorExeSHA256": "2529b494f4123f152bce346051f7bd855ef95006424a561953cf17c49a3d1ba8",
+      "exeSHA256": "6aa0871505e94a4788497d45daaeda829d4ae2c2f6e03393a780e3f76f0c6666",
+      "realVKPlaySandboxTested": false
+    }
+  },
+  "server": {
+    "file": "Nonogram-VKPlay-Server-Amvera-3.2.3.zip",
+    "version": "3.2.3",
+    "bytes": 109871,
+    "sha256": "064f6fa40373bea540acc6888e90748f879f5d0b024ef70d3298029fc9fab99d",
+    "crcVerified": true,
+    "realVKPlaySandboxTested": false,
+    "deployed": false
+  }
+}
