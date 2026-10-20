@@ -25,6 +25,7 @@ from vkplay import sign
 from test_payments import FakeTransport, SECRET
 
 IDS = dict(zip(('coins_500', 'coins_1200', 'coins_3000', 'coins_7000', 'starter'), range(2001, 2006)))
+PAIR_IDS = ','.join(f'{key}={value}' for key, value in IDS.items())
 ENV = {'VKPLAY_APP_ID': '12345', 'VKPLAY_SECRET': SECRET}
 
 
@@ -50,6 +51,42 @@ class Configuration(unittest.TestCase):
     def test_bad_catalog_mappings_rejected(self):
         for ids in ([], {'coins_500': 1}, {**IDS, 'starter': 2001}, {**IDS, 'starter': True}, {**IDS, 'starter': '../x'}):
             with self.assertRaises(ConfigurationError): load_settings({**ENV, 'VKPLAY_ITEMDEF_IDS': json.dumps(ids)})
+
+    def test_quote_free_mapping_matches_existing_json_configuration(self):
+        for raw in (PAIR_IDS, ' , '.join(f' {key} = {value} ' for key, value in IDS.items())):
+            with self.subTest(raw=raw):
+                config = load_settings({**ENV, 'VKPLAY_BILLING_ENABLED': 'true', 'VKPLAY_ITEMDEF_IDS': raw})
+                self.assertTrue(config.billing_enabled)
+                self.assertEqual(config.item_ids, {key: str(value) for key, value in IDS.items()})
+
+    def test_invalid_quote_free_catalog_never_enables_billing(self):
+        invalid = ('coins_500=2001', PAIR_IDS + ',coins_500=9001',
+                   PAIR_IDS.replace('starter=2005', 'starter=2001'),
+                   PAIR_IDS.replace('starter=2005', 'starter=0'),
+                   PAIR_IDS.replace('starter=2005', 'starter=true'),
+                   PAIR_IDS.replace('starter=2005', 'starter=02005'),
+                   PAIR_IDS.replace('starter=2005', 'unknown=2005'),
+                   PAIR_IDS + ',', PAIR_IDS.replace('coins_500=', 'coins_500=='),
+                   PAIR_IDS.replace('starter=2005', 'starter=../x'))
+        for raw in invalid:
+            with self.subTest(raw=raw), self.assertRaises(ConfigurationError):
+                load_settings({**ENV, 'VKPLAY_BILLING_ENABLED': 'true', 'VKPLAY_ITEMDEF_IDS': raw})
+
+    def test_duplicate_json_keys_are_rejected_instead_of_overwritten(self):
+        raw = json.dumps(IDS)[:-1] + ', "coins_500": 9001}'
+        with self.assertRaises(ConfigurationError):
+            load_settings({**ENV, 'VKPLAY_BILLING_ENABLED': 'true', 'VKPLAY_ITEMDEF_IDS': raw})
+
+    def test_new_mapping_does_not_enable_sales_without_explicit_switch(self):
+        config = load_settings({**ENV, 'VKPLAY_ITEMDEF_IDS': PAIR_IDS})
+        self.assertFalse(config.billing_enabled)
+        self.assertTrue(config.item_ids)
+
+    def test_bad_mapping_error_does_not_echo_environment_value(self):
+        raw = PAIR_IDS + ',private-value-never-log'
+        with self.assertRaises(ConfigurationError) as result:
+            load_settings({**ENV, 'VKPLAY_ITEMDEF_IDS': raw})
+        self.assertNotIn('private-value-never-log', str(result.exception))
 
     def test_bad_network_configuration_rejected(self):
         for env in ({'TRUSTED_PROXY_IPS': '0.0.0.0/0'}, {'TRUSTED_PROXY_IPS': '::/0'},
@@ -123,6 +160,23 @@ class Deployment(unittest.TestCase):
     def test_item_mapping_is_used_in_outbound_order(self):
         self.pay()
         self.assertEqual(self.store.api.request.calls[-1][2]['ids'], '2001')
+
+    def test_quote_free_mapping_reaches_checkout_for_all_five_products(self):
+        self.stop()
+        self.config = load_settings({**ENV, 'VKPLAY_ITEMDEF_IDS': PAIR_IDS,
+                                     'VKPLAY_BILLING_ENABLED': 'true',
+                                     'DATA_DIR': self.tmp.name, 'BIND_ADDRESS': '127.0.0.1'})
+        self.config.port = 0
+        self.start()
+        token = self.auth()
+        for product, item_id in IDS.items():
+            with self.subTest(product=product):
+                code, order = self.request('/api/vkplay/order',
+                                           {'product': product, 'requestId': 'pair-checkout-' + product}, token)
+                self.assertEqual(code, 200)
+                self.assertEqual(order['status'], 'pending')
+                self.assertEqual(self.store.api.request.calls[-1][2]['ids'], str(item_id))
+        self.assertEqual(self.store.wallet('42')['coins'], 120)
 
     def test_backup_restores_wallet_receipt_session_and_idempotence(self):
         token, receipt = self.pay()
