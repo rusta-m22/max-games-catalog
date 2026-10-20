@@ -55,6 +55,28 @@ def response_json(response):
         raise Error('VKPLAY_INVALID_RESPONSE', 502)
     return value
 
+def checkout_origin(value):
+    """Bounded diagnostics only: never include a path, query, fragment or userinfo."""
+    if not isinstance(value, str):
+        kind = 'missing' if value is None else 'object' if isinstance(value, dict) else 'array' if isinstance(value, list) else 'other'
+        return f'value_type={kind}'
+    try:
+        parsed = urlsplit(value)
+        host = parsed.hostname or 'none'
+        if len(host) > 253 or not re.fullmatch(r'[a-z0-9.-]+', host):
+            host = 'invalid'
+        scheme = parsed.scheme or 'none'
+        if not re.fullmatch(r'[a-z][a-z0-9+.-]{0,19}', scheme):
+            scheme = 'invalid'
+        try:
+            port = str(parsed.port) if parsed.port is not None else 'default'
+        except ValueError:
+            port = 'invalid'
+        credentials = bool(parsed.username is not None or parsed.password is not None)
+        return f'value_type=string scheme={scheme} host={host} port={port} userinfo={int(credentials)}'
+    except ValueError:
+        return 'value_type=string format=invalid'
+
 def transport(method, url, data=None):
     body = urlencode(data).encode() if data is not None else None
     req = Request(url, data=body, method=method, headers={'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'})
@@ -118,13 +140,13 @@ class VKPlay:
         if result.get('status') == 'error':
             logging.warning('VK Play checkout rejected code=%s', platform_code(result))
             raise BillingRejected()
-        payment_url = result.get('url','')
+        payment_url = result.get('url')
         try:
             if not isinstance(payment_url, str): raise ValueError()
             u = urlsplit(payment_url)
             valid = u.scheme == 'https' and u.hostname in self.payment_hosts and u.port in (None,443) and not u.username and not u.password
         except ValueError: valid = False
         if not valid:
-            logging.warning('VK Play checkout response reason=payment_url_not_allowed')
+            logging.warning('VK Play checkout response reason=payment_url_not_allowed %s', checkout_origin(payment_url))
             raise Error('UNEXPECTED_PAYMENT_HOST',502)
         return payment_url
