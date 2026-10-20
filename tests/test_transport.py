@@ -143,6 +143,31 @@ class CheckoutHTTP(unittest.TestCase):
         self.store.callback(receipt)
         self.assertEqual(self.balance(), 620)
 
+    def test_vkpay_checkout_origin_is_accepted_without_changing_payment_parameters(self):
+        payment_url = 'https://co.vkpay.ru/local-checkout?order=local%2F123&return_url=https%3A%2F%2Fvkplay.ru%2F'
+        self.response(200, {'status': 'ok', 'url': payment_url})
+        result = self.order()
+        self.assertEqual(result['status'], 'pending')
+        self.assertEqual(result['paymentUrl'], payment_url)
+        self.assertEqual(self.balance(), 120)
+        receipt = self.receipt(result)
+        self.store.callback(receipt)
+        self.store.callback(receipt)
+        self.assertEqual(self.balance(), 620)
+
+    def test_vkpay_lookalikes_and_unsafe_origins_are_still_rejected(self):
+        urls = ('https://co.vkpay.ru.evil.example/pay', 'https://co-vkpay.ru/pay',
+                'https://other.vkpay.ru/pay', 'http://co.vkpay.ru/pay',
+                'https://co.vkpay.ru:444/pay', 'https://user:password@co.vkpay.ru/pay')
+        for index, url in enumerate(urls):
+            with self.subTest(url=url):
+                self.response(200, {'status': 'ok', 'url': url})
+                with self.assertLogs(level='WARNING'), self.assertRaises(Error) as failure:
+                    self.order(request='unsafe-vkpay-' + str(index))
+                self.assertEqual(failure.exception.code, 'UNEXPECTED_PAYMENT_HOST')
+                self.assertEqual(self.state(), 'unknown')
+        self.assertEqual(self.balance(), 120)
+
     def test_late_signed_callback_after_http_failure_remains_authoritative(self):
         self.response(503, b'private-gateway-body')
         with self.assertLogs(level='WARNING'), self.assertRaises(Error):

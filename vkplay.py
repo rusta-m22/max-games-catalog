@@ -113,7 +113,7 @@ def transport(method, url, data=None):
         raise Error('VKPLAY_NETWORK_ERROR', 502) from None
 
 class VKPlay:
-    def __init__(self, app_id, secret, request=transport, payment_hosts=('vkplay.ru',)):
+    def __init__(self, app_id, secret, request=transport, payment_hosts=('vkplay.ru', 'co.vkpay.ru')):
         if not re.fullmatch(r'[1-9][0-9]{0,15}', str(app_id)) or len(secret) < 16:
             raise RuntimeError('Configure VKPLAY_APP_ID and VKPLAY_SECRET on the server')
         self.app_id, self.secret, self.request = str(app_id), secret, request
