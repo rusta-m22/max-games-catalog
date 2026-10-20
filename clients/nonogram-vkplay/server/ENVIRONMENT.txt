@@ -1,4 +1,4 @@
-Nonogram backend 3.2.1. All settings are runtime environment variables.
+Nonogram backend 3.2.2. All settings are runtime environment variables.
 With both credentials absent: /health=200; /ready=503; game APIs disabled.
 Partial or malformed credentials/configuration: startup fails without logging values.
 

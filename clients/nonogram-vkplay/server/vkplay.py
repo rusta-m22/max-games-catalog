@@ -3,7 +3,11 @@ import hashlib
 import hmac
 import ipaddress
 import json
+import logging
 import re
+import socket
+import ssl
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 from economy_core import Error, dump
@@ -30,13 +34,61 @@ def ipv4(value):
     except ValueError:
         raise Error('IPV4_REQUIRED', 400)
 
+HTTP_API_REJECTIONS = frozenset(('1002', '2000', '2001', '2002', '2003', '2004', '5001'))
+
+def platform_code(value):
+    # Never echo errmsg or an arbitrary upstream value into application logs.
+    code = value.get('errcode') if isinstance(value, dict) else None
+    if isinstance(code, bool) or not isinstance(code, (int, str)):
+        return 'unspecified'
+    return str(code) if re.fullmatch(r'[0-9]{1,6}', str(code)) else 'unspecified'
+
+def response_json(response):
+    raw = response.read(1024 * 1024 + 1)
+    if len(raw) > 1024 * 1024:
+        raise Error('PLATFORM_RESPONSE_TOO_LARGE', 502)
+    try:
+        value = json.loads(raw)
+    except (ValueError, UnicodeError):
+        raise Error('VKPLAY_INVALID_RESPONSE', 502) from None
+    if not isinstance(value, dict):
+        raise Error('VKPLAY_INVALID_RESPONSE', 502)
+    return value
+
 def transport(method, url, data=None):
     body = urlencode(data).encode() if data is not None else None
     req = Request(url, data=body, method=method, headers={'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'})
-    with urlopen(req, timeout=15) as r:
-        raw = r.read(1024 * 1024 + 1)
-        if len(raw) > 1024 * 1024: raise Error('PLATFORM_RESPONSE_TOO_LARGE', 502)
-        return json.loads(raw)
+    operation = 'gas' if urlsplit(url).path.endswith('/gas') else 'billing'
+    try:
+        try:
+            response = urlopen(req, timeout=15)
+        except HTTPError as rejection:
+            status = rejection.code
+            try:
+                with rejection:
+                    value = response_json(rejection)
+            except Error:
+                logging.warning('VK Play HTTP failure operation=%s http=%d response=invalid', operation, status)
+                raise Error('VKPLAY_HTTP_ERROR', 502) from None
+            code = platform_code(value)
+            # Only a documented API rejection on a definite client error is
+            # retryable. Gateway errors, throttling and timeouts stay uncertain.
+            if 400 <= status < 500 and status not in (408, 429) and value.get('status') == 'error' and code in HTTP_API_REJECTIONS:
+                logging.warning('VK Play API rejection operation=%s http=%d code=%s', operation, status, code)
+                return value
+            logging.warning('VK Play HTTP failure operation=%s http=%d code=%s outcome=uncertain', operation, status, code)
+            raise Error('VKPLAY_HTTP_ERROR', 502) from None
+        with response:
+            try:
+                return response_json(response)
+            except Error as failure:
+                logging.warning('VK Play response failure operation=%s reason=%s', operation, failure.code)
+                raise
+    except (URLError, OSError) as failure:
+        reason = getattr(failure, 'reason', failure)
+        category = 'timeout' if isinstance(reason, TimeoutError) else 'dns' if isinstance(reason, socket.gaierror) else 'tls' if isinstance(reason, ssl.SSLError) else 'connection'
+        logging.warning('VK Play network failure operation=%s reason=%s', operation, category)
+        raise Error('VKPLAY_NETWORK_ERROR', 502) from None
 
 class VKPlay:
     def __init__(self, app_id, secret, request=transport, payment_hosts=('vkplay.ru',)):
@@ -60,11 +112,19 @@ class VKPlay:
         params = {'ids':str(product['itemDefId']), 'merchant_param':dump(merchant)}
         url = f'https://vkplay.ru/app/{self.app_id}/billing/item/client?'+urlencode({'sign':sign(params,self.secret)})
         result = self.request('POST',url,params)
-        if result.get('status') != 'ok': raise BillingRejected()
+        if not isinstance(result, dict) or result.get('status') not in ('ok', 'error'):
+            logging.warning('VK Play checkout response reason=invalid_status')
+            raise Error('VKPLAY_INVALID_RESPONSE', 502)
+        if result.get('status') == 'error':
+            logging.warning('VK Play checkout rejected code=%s', platform_code(result))
+            raise BillingRejected()
         payment_url = result.get('url','')
         try:
+            if not isinstance(payment_url, str): raise ValueError()
             u = urlsplit(payment_url)
             valid = u.scheme == 'https' and u.hostname in self.payment_hosts and u.port in (None,443) and not u.username and not u.password
         except ValueError: valid = False
-        if not valid: raise Error('UNEXPECTED_PAYMENT_HOST',502)
+        if not valid:
+            logging.warning('VK Play checkout response reason=payment_url_not_allowed')
+            raise Error('UNEXPECTED_PAYMENT_HOST',502)
         return payment_url
