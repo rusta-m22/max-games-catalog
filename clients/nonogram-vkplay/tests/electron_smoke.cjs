@@ -39,6 +39,45 @@ async function ready(page) {
       await running.close();running=null;
     } else {
       page=await open(['--preview']);await ready(page);
+      // Exercise the compiled packaged addon against a LOCAL fixture, never the real SDK/payment service.
+      const sdkFixture=path.join(root,'native/build/Release/gclay_fixture.dll');
+      assert(fs.existsSync(sdkFixture),'Local fixture DLL must exist');
+      const sdk=await running.evaluate(({app},fixture)=>{
+        const req=process.getBuiltinModule('module').createRequire(app.getAppPath()+'/package.json');
+        const addon=req('./desktop/vkplay_overlay.node');
+        const previousPath=process.env.GC_GCLAY64_PATHNAME;
+        const previousMode=process.env.NONOGRAM_FAKE_GCLAY_MODE;
+        try {
+          delete process.env.GC_GCLAY64_PATHNAME;
+          const absent=addon.initialize();
+          process.env.GC_GCLAY64_PATHNAME='C:\\nonexistent-nonogram-fixture\\gclay64.dll';
+          const missing=addon.initialize();
+          process.env.GC_GCLAY64_PATHNAME=fixture;
+          process.env.NONOGRAM_FAKE_GCLAY_MODE='';
+          const loaded=addon.initialize();
+          const url='https://co.vkpay.ru/test?order=local%2F123&lang=ru';
+          process.env.NONOGRAM_FAKE_GCLAY_MODE='disconnected';
+          const disconnected=addon.open(url);
+          process.env.NONOGRAM_FAKE_GCLAY_MODE='rejected';
+          const rejected=addon.open(url);
+          process.env.NONOGRAM_FAKE_GCLAY_MODE='';
+          const accepted=addon.open(url);
+          return {absent,missing,loaded,disconnected,rejected,accepted};
+        } finally {
+          if(previousPath===undefined)delete process.env.GC_GCLAY64_PATHNAME;
+          else process.env.GC_GCLAY64_PATHNAME=previousPath;
+          if(previousMode===undefined)delete process.env.NONOGRAM_FAKE_GCLAY_MODE;
+          else process.env.NONOGRAM_FAKE_GCLAY_MODE=previousMode;
+        }
+      },sdkFixture);
+      assert.equal(sdk.absent.error,'OVERLAY_NOT_LOADED');
+      assert.equal(sdk.missing.error,'OVERLAY_LOAD_FAILED');assert(sdk.missing.loadError>0);
+      assert(sdk.loaded.available&&sdk.loaded.explicitlyLoaded);assert.equal(sdk.loaded.loadError,0);
+      assert.equal(sdk.disconnected.error,'GAME_CENTER_NOT_CONNECTED');assert(!sdk.disconnected.accepted);
+      assert.equal(sdk.rejected.error,'OVERLAY_FORM_REJECTED');assert(!sdk.rejected.accepted);
+      assert(sdk.accepted.accepted);assert.equal(sdk.accepted.overlayState,1);
+      report.gclayNativeFixtureTested=true;
+      report.checks.push('Packaged native addon: local fixture verifies packed x64 ABI, URL preservation, missing DLL, disconnect, rejection and acceptance; real VK Play NOT tested');
       const boot=await page.evaluate(()=>Native.bootstrap());
       assert(boot.ready&&boot.preview&&!boot.authorized);
       assert.equal(await page.evaluate(()=>typeof require),'undefined');
