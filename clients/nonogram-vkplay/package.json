@@ -1,6 +1,6 @@
 {
   "name": "nonogram-vkplay",
-  "version": "3.2.3",
+  "version": "3.2.6",
   "private": true,
   "description": "Nonogram Little Worlds — VK Play Windows client",
   "main": "desktop/main.cjs",

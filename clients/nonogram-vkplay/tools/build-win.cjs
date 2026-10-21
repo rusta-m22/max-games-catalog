@@ -7,7 +7,6 @@ const root = path.resolve(__dirname, '..');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 
 async function build() {
-  execFileSync(process.execPath,[path.join(root,'tools/build-overlay.cjs')],{stdio:'inherit'});
   const pkg = require('../package.json'), config = require('../desktop/config.json');
   if (config.releaseConfigured) require('../desktop/platform-core.cjs').checkConfig(config);
   const version = pkg.devDependencies.electron;
@@ -46,7 +45,7 @@ async function build() {
   fs.rmSync(path.join(dest, 'electron.exe'));
   fs.rmSync(path.join(dest, 'resources/default_app.asar'), {force:true});
   const appDir = path.join(dest, 'resources/app'); fs.mkdirSync(appDir, {recursive:true});
-  for (const folder of ['game', 'desktop']) fs.cpSync(path.join(root, folder), path.join(appDir, folder), {recursive:true});
+  for (const folder of ['game', 'desktop']) fs.cpSync(path.join(root, folder), path.join(appDir, folder), {recursive:true,filter:source=>path.basename(source)!=='vkplay_overlay.node'});
   const packaged = {...pkg}; delete packaged.devDependencies; delete packaged.scripts;
   fs.writeFileSync(path.join(appDir, 'package.json'), JSON.stringify(packaged,null,2)+'\n');
   if (!config.releaseConfigured) fs.writeFileSync(path.join(dest, 'Preview.cmd'),
@@ -56,7 +55,7 @@ async function build() {
     (config.releaseConfigured ? 'Start from VK Play Game Center.\n' : 'Preview.cmd opens the game without payments.\n')+
     'VK Play Game Center, overlay and platform sandbox payments require separate testing.\n');
   const buildInfo = {version:pkg.version, electron:version, platform:'win32', arch:'x64',
-    releaseConfigured:config.releaseConfigured, codeSigned:false, brandedResources:true,nativeGCLayBridge:true,
+    releaseConfigured:config.releaseConfigured, codeSigned:false, brandedResources:true,nativeGCLayBridge:false,checkoutTransport:'vkplay:// via Electron shell.openExternal / ShellExecuteExW',
     vendorArchiveSHA256:hash(fs.readFileSync(zip)), vendorExeSHA256:hash(vendor),
     exeSHA256:hash(branded), realVKPlaySandboxTested:false};
   fs.writeFileSync(path.join(dest,'BUILD-INFO.json'),JSON.stringify(buildInfo,null,2)+'\n');
@@ -75,8 +74,7 @@ async function build() {
     }
   }
   walk(dest);
-  if (!files.some(f=>f.path==='resources/app/desktop/vkplay_overlay.node')) throw new Error('NATIVE_BRIDGE_MISSING');
-  if (files.some(f=>/gclay_fixture|gclay64\.dll|\/native\/|\/tests\//i.test(f.path))) throw new Error('TEST_OR_VENDOR_DLL_IN_DISTRIBUTION');
+  if (files.some(f=>/vkplay_overlay\.node|gclay_fixture|gclay64\.dll|\/native\/|\/tests\//i.test(f.path))) throw new Error('TEST_OR_VENDOR_DLL_IN_DISTRIBUTION');
   if (files.length>999) throw new Error('VKPLAY_FILE_LIMIT');
   fs.writeFileSync(path.join(dest,'FILES-SHA256.json'),JSON.stringify(files,null,2)+'\n');
   fs.mkdirSync(path.join(root,'evidence'),{recursive:true});

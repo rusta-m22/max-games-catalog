@@ -1,30 +1,42 @@
 'use strict';
 const {overlayUrl}=require('./platform-core.cjs');
-// The main process owns this bridge. No arbitrary native path or API is exposed to the renderer.
-function createOverlay(config,{platform=process.platform,load=()=>require('./vkplay_overlay.node')}={}) {
-  let native, last={available:false,error:'OVERLAY_NOT_LOADED'};
-  function initialize() {
-    if(platform!=='win32')return last={available:false,error:'OVERLAY_UNSUPPORTED_PLATFORM'};
-    try { native ||= load(); return last=native.initialize(); }
-    catch (_) { return last={available:false,error:'OVERLAY_BRIDGE_UNAVAILABLE'}; }
+
+// Main-process only. Electron's Windows implementation uses ShellExecuteExW.
+// The renderer supplies a product ID; only the server may supply a checkout URL.
+function createOverlay(config,{platform=process.platform,openExternal,log=()=>{}}={}) {
+  const available=platform==='win32'&&typeof openExternal==='function';
+  let last={available,method:'shell.openExternal',scheme:'vkplay',visible:null};
+  function record(event,details={}) {
+    // Never include the URL, query, user/order IDs, launch args or exception text.
+    try {log({event,method:'shell.openExternal',scheme:'vkplay',...details});} catch (_) {}
   }
-  function status() {
-    if(!native)return last;
-    try { return last=native.status(); }
-    catch (_) { return last={available:false,error:'OVERLAY_BRIDGE_UNAVAILABLE'}; }
-  }
-  function open(url) {
-    // Reuse the existing exact HTTPS origin validation, without opening a shell protocol.
-    if(typeof url!=='string'||/[\u0000-\u0020\u007f]/.test(url))throw new Error('INVALID_PAYMENT_URL');
-    overlayUrl(url,config);
-    if(!native||!last.available)initialize();
-    if(!last.available)return {ok:false,error:last.error};
+  async function open(url) {
+    if(!available) {
+      const error=platform==='win32'?'PAYMENT_LAUNCH_FAILED':'OVERLAY_UNSUPPORTED_PLATFORM';
+      last={...last,submitted:false,error};
+      return {ok:false,error};
+    }
+    let command;
+    try {command=overlayUrl(url,config);} catch (e) {
+      const error=['INVALID_PAYMENT_URL','UNEXPECTED_PAYMENT_HOST','PAYMENT_URL_TOO_LONG',
+        'BUILD_NOT_CONFIGURED','INVALID_CONFIG'].includes(e.message)?e.message:'INVALID_PAYMENT_URL';
+      last={...last,submitted:false,error};record('rejected',{error});
+      return {ok:false,error};
+    }
+    const details={gcid:config.gcid,paymentHost:new URL(url).hostname};
+    record('requested',details);
     try {
-      last=native.open(url);
-      return last.accepted ? {ok:true,visible:last.overlayState===1} :
-        {ok:false,error:last.error||'OVERLAY_FORM_REJECTED'};
-    } catch (_) { return {ok:false,error:'OVERLAY_BRIDGE_UNAVAILABLE'}; }
+      await openExternal(command,{logUsage:true});
+    } catch (_) {
+      last={...last,submitted:false,error:'PAYMENT_LAUNCH_FAILED'};
+      record('failed',{...details,error:last.error});
+      return {ok:false,error:last.error};
+    }
+    // Windows accepting the command proves neither a visible form nor payment.
+    last={available,method:'shell.openExternal',scheme:'vkplay',submitted:true,visible:null};
+    record('submitted',details);
+    return {ok:true,submitted:true,visible:null};
   }
-  return {initialize,status,open};
+  return {initialize:()=>({...last}),status:()=>({...last}),open};
 }
 module.exports={createOverlay};
