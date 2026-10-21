@@ -1,0 +1,81 @@
+{
+  "version": "3.2.6",
+  "date": "2026-10-21",
+  "sourceCommit": "597174341f779a3e0b6b99e6072f17d39736eb71",
+  "mergeCommit": "d75d36cd69dcf408c57939142ac9f0d773ac0925",
+  "ci": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39656134518",
+  "checks": {
+    "python": 83,
+    "nodeLinux": 29,
+    "nodeWindows": 29,
+    "browserEmulated": 14,
+    "windowsPreview": {
+      "environment": "Packaged Windows application; no real VK Play requests",
+      "platform": "win32",
+      "windows": "10.0.20348",
+      "checks": [
+        "Packaged EXE: real Windows ShellExecuteEx dispatch to isolated local vkplay handler; exact nested URL and dimensions preserved; Game Center/payment NOT tested",
+        "Direct EXE launch is guarded; purchases cannot bypass authorization",
+        "Packaged EXE boots; isolated renderer and Windows DPAPI roundtrip pass",
+        "First puzzle solved through native mouse input; completion and reward recorded",
+        "Hint purchase, RU/EN, disabled real-money checkout and restart persistence pass"
+      ],
+      "errors": [],
+      "passed": true,
+      "realVKPlaySandboxTested": false,
+      "realGameCenterOverlayTested": false,
+      "exeSHA256": "105eb91cb9cc0d263f1672396e93890066b825d8993543676c6050f0552e1364",
+      "shellProtocolDispatchTested": true
+    },
+    "windowsConfigured": {
+      "environment": "Packaged Windows application; no real VK Play requests",
+      "platform": "win32",
+      "windows": "10.0.20348",
+      "checks": [
+        "Packaged EXE: real Windows ShellExecuteEx dispatch to isolated local vkplay handler; exact nested URL and dimensions preserved; Game Center/payment NOT tested",
+        "Direct EXE launch is guarded; purchases cannot bypass authorization",
+        "Preview flag cannot bypass a configured release"
+      ],
+      "errors": [],
+      "passed": true,
+      "realVKPlaySandboxTested": false,
+      "realGameCenterOverlayTested": false,
+      "exeSHA256": "105eb91cb9cc0d263f1672396e93890066b825d8993543676c6050f0552e1364",
+      "shellProtocolDispatchTested": true
+    },
+    "downloadSHA256Verified": true,
+    "packagedRuntimeSourcesComparedIgnoringCRLF": [
+      "desktop/main.cjs",
+      "desktop/platform-core.cjs",
+      "desktop/overlay.cjs",
+      "game/economy.js"
+    ]
+  },
+  "archive": {
+    "file": "Nonogram-VKPlay-Windows-x64-3.2.6.zip",
+    "bytes": 176505059,
+    "sha256": "862212c1adc43affec3cd225d21b1c3c05d8bee4caf0aa02437d82b08bf2461b",
+    "crcVerified": true,
+    "fileCount": 313,
+    "build": {
+      "version": "3.2.6",
+      "electron": "44.7.0",
+      "platform": "win32",
+      "arch": "x64",
+      "releaseConfigured": true,
+      "codeSigned": false,
+      "brandedResources": true,
+      "nativeGCLayBridge": false,
+      "checkoutTransport": "vkplay:// via Electron shell.openExternal / ShellExecuteExW",
+      "vendorArchiveSHA256": "eee30dc8fa1f5ea95490e59f44e46ea68dd24c6e93d22facf70fe5c2d4c2665c",
+      "vendorExeSHA256": "2529b494f4123f152bce346051f7bd855ef95006424a561953cf17c49a3d1ba8",
+      "exeSHA256": "105eb91cb9cc0d263f1672396e93890066b825d8993543676c6050f0552e1364",
+      "realVKPlaySandboxTested": false
+    }
+  },
+  "testUploaded": false,
+  "livePublished": false,
+  "realGameCenterFormTested": false,
+  "realSandboxPaymentTested": false,
+  "backendChanged": false
+}

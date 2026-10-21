@@ -29,7 +29,12 @@ vkplay://demandbrowserform/0.2046788/?url=<encodeURIComponent исходной p
 ## Проверки
 
 - Локально: 29 Node-тестов прошли (содержимое 507 уровней, URI, точное сохранение вложенных параметров, allowlist, отсутствие секретов в диагностике, ожидание Promise, отказ и повтор вызова).
-- Python-сценарии, браузерные сценарии, Windows EXE и архив: результаты будут добавлены после CI.
+- [GitHub Actions 39656134518](https://github.com/rusta-m22/max-games-catalog/actions/runs/39656134518) завершился успешно на исходном коммите `597174341f779a3e0b6b99e6072f17d39736eb71`.
+- Linux: 83 Python, 29 Node и 14 браузерных сценариев прошли. Платформа и callback в этих сценариях имитируются локально.
+- Windows: 29 Node-проверок, запуск настоящего preview EXE, решение первого уровня мышью, подсказка за монеты, RU/EN, DPAPI и восстановление после перезапуска — пройдены.
+- Настроенный release EXE: запрет прямого запуска и обхода через `--preview`, а также системная передача URI — пройдены.
+- Архив: 313 файлов, CRC и SHA-256 проверены. Сборка не подписана сертификатом издателя.
+- Автоматическая загрузка в VK Play Test не запускалась (`upload-test: skipped`).
 - Новый Windows-тест вызывает настоящий `shell.openExternal` из упакованного EXE и проверяет полученный URI через временный локальный обработчик. Он отказывается заменять существующую регистрацию VK Play и удаляет тестовую регистрацию в finally. Это проверка системной передачи команды, не Game Center и не платёж.
 - Реальный Game Center для 3.2.6, показ формы, sandbox-покупка, callback и начисление: **не проверены**.
 
@@ -41,3 +46,11 @@ Backend Amvera для этого исправления не изменяетс�
 - https://www.electronjs.org/docs/latest/api/shell
 - https://github.com/electron/electron/blob/v44.7.0/shell/common/platform_util_win.cc
 - Сообщение поддержки VK Play, переданное владельцем 21.10.2026: «нужно пробовать через shellexecute - vkplay://demandbrowserform/».
+
+## Готовая сборка
+
+[Скачать Windows ZIP через GitHub](https://github.com/rusta-m22/max-games-catalog/actions/runs/39656134518/artifacts/12372007298). Внутри artifact находится `Nonogram-VKPlay-Windows-x64-3.2.6.zip`; его нужно распаковать отдельно. Артефакт GitHub хранится до 4 ноября 2026, около 23:50 по Екатеринбургу.
+
+- ZIP: 176 505 059 байт; SHA-256 `862212c1adc43affec3cd225d21b1c3c05d8bee4caf0aa02437d82b08bf2461b`.
+- Nonogram.exe: SHA-256 `105eb91cb9cc0d263f1672396e93890066b825d8993543676c6050f0552e1364`.
+- [Машиночитаемый отчёт](VERIFICATION-2026-10-21-3.2.6.json).

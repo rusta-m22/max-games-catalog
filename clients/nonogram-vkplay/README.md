@@ -2,7 +2,7 @@
 
 Существующая игра «Нонограммы: Маленькие миры», 507 головоломок и 10 миров, упакованная в Windows 10/11 x64 приложение Electron. Исходный каталог MAX/Яндекс не изменяется.
 
-**Клиент 3.2.6, 21.10.2026:** по рекомендации поддержки кнопка оплаты использует `vkplay://demandbrowserform/` через Electron `shell.openExternal` (Windows `ShellExecuteExW`). Прямой вызов GCLay убран из рабочего пути и DLL-мост не поставляется. Локально прошли 29 Node-проверок; результаты нового Windows CI и ссылка на ZIP будут зафиксированы в [изменениях 3.2.6](docs/CHANGES-3.2.6.md). Фактический показ формы в Game Center и sandbox-платёж пока не подтверждены.
+**Клиент 3.2.6, 21.10.2026:** по рекомендации поддержки кнопка оплаты использует `vkplay://demandbrowserform/` через Electron `shell.openExternal` (Windows `ShellExecuteExW`). Прямой вызов GCLay убран из рабочего пути и DLL-мост не поставляется. [CI 39656134518](https://github.com/rusta-m22/max-games-catalog/actions/runs/39656134518) прошёл: 83 Python, 29 Node на Linux и Windows, 14 браузерных сценариев и настоящий Windows EXE с системным вызовом в локальный обработчик. [Скачать Windows ZIP](https://github.com/rusta-m22/max-games-catalog/actions/runs/39656134518/artifacts/12372007298), [подробные результаты](docs/CHANGES-3.2.6.md). Фактический показ формы в Game Center и sandbox-платёж пока не подтверждены.
 
 Точный разрешённый домен `co.vkpay.ru` из 3.2.2 сохранён вместе с `vkplay.ru`. Backend для этого изменения обновлять не нужно. Его параметр `VKPLAY_PAYMENT_HOSTS=vkplay.ru,co.vkpay.ru` должен оставаться заданным. Секреты, кошелёк, подписи callback и защита от повторного начисления не меняются.
 
