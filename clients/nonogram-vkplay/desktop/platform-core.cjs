@@ -10,7 +10,18 @@ function checkConfig(c){
  if(!c.releaseConfigured)throw new Error('BUILD_NOT_CONFIGURED');
  const u=new URL(c.backendUrl);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash||u.pathname!=='/'||!/^\d+\.\d+$/.test(c.gcid)||!Array.isArray(c.paymentHosts)||!c.paymentHosts.length)throw new Error('INVALID_CONFIG');return c;
 }
-function overlayUrl(url,c){checkConfig(c);const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password||u.port||!c.paymentHosts.includes(u.hostname))throw new Error('UNEXPECTED_PAYMENT_HOST');return 'mycomgames://demandbrowserform/'+c.gcid+'/?'+new URLSearchParams({url:u.href,width:'80%',height:'80%',caption:'Nonogram — VK Play'});}
+function overlayUrl(url,c){
+ checkConfig(c);
+ if(typeof url!=='string'||!url||/[\u0000-\u0020\u007f\\]/.test(url))throw new Error('INVALID_PAYMENT_URL');
+ const u=new URL(url);
+ if(u.protocol!=='https:'||u.username||u.password||u.port||!c.paymentHosts.includes(u.hostname))throw new Error('UNEXPECTED_PAYMENT_HOST');
+ // VK Play support requested vkplay:// on 2026-10-21. Docs still show mycomgames://.
+ // Encode the ORIGINAL signed URL exactly once, not u.href. No cmd/start.
+ const command='vkplay://demandbrowserform/'+c.gcid+'/?url='+encodeURIComponent(url)+
+  '&width=80%&height=80%&caption='+encodeURIComponent('Nonogram - VK Play');
+ if(command.length>2081)throw new Error('PAYMENT_URL_TOO_LONG');
+ return command;
+}
 function allowedRequest(route,payload){if(typeof route!=='string')return false;if(payload===undefined)return ['/api/wallet','/api/catalog','/api/progress'].includes(route)||/^\/api\/rank\?kind=(daily|weekly)$/.test(route)||/^\/api\/vkplay\/order\?id=[A-Za-z0-9_-]{8,100}$/.test(route);return ['/api/action','/api/rank/start','/api/rank/finish'].includes(route)&&payload!==null&&typeof payload==='object'&&!Array.isArray(payload);}
 function seal(value,key){const data=JSON.stringify(value);if(Buffer.byteLength(data)>500000)throw new Error('SAVE_TOO_LARGE');return JSON.stringify({data,mac:crypto.createHmac('sha256',key).update(data).digest('hex')});}
 function unseal(raw,key){const {data,mac}=JSON.parse(raw);if(typeof data!=='string'||Buffer.byteLength(data)>500000||typeof mac!=='string'||!/^[0-9a-f]{64}$/.test(mac))throw new Error('INVALID_SAVE');const check=crypto.createHmac('sha256',key).update(data).digest();if(!crypto.timingSafeEqual(check,Buffer.from(mac,'hex')))throw new Error('INVALID_SAVE');return JSON.parse(data);}

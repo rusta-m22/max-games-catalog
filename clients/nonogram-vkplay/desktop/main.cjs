@@ -1,10 +1,10 @@
 'use strict';
-const {app,BrowserWindow,ipcMain,protocol,net,safeStorage,session}=require('electron');
+const {app,BrowserWindow,ipcMain,protocol,net,safeStorage,session,shell}=require('electron');
 const path=require('node:path'),fs=require('node:fs'),crypto=require('node:crypto');
 const {pathToFileURL}=require('node:url');
 const {launchArgs,checkConfig,allowedRequest,seal,unseal}=require('./platform-core.cjs');
 const config=require('./config.json');
-const gameOverlay=require('./overlay.cjs').createOverlay(config);
+const gameOverlay=require('./overlay.cjs').createOverlay(config,{openExternal:(url,options)=>shell.openExternal(url,options),log:checkoutLog});
 protocol.registerSchemesAsPrivileged([{scheme:'nono',privileges:{standard:true,secure:true,supportFetchAPI:true}}]);
 app.setName('NonogramVKPlay');
 let win,token='',boot={ready:false,authorized:false},savePath,saveKey,dirtySave,cloudTimer,cloudBusy=false;
@@ -14,6 +14,14 @@ if(!app.requestSingleInstanceLock())app.quit();else{
 }
 function goodSender(e){return e.sender===win?.webContents&&e.senderFrame===win.webContents.mainFrame&&e.senderFrame.url.startsWith('nono://game/');}
 function atomic(file,data){fs.mkdirSync(path.dirname(file),{recursive:true});const tmp=file+'.tmp',fd=fs.openSync(tmp,'w',0o600);try{fs.writeFileSync(fd,data);fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(tmp,file);}
+function checkoutLog(entry){
+ try {
+  const file=path.join(app.getPath('userData'),'logs','checkout.log');
+  fs.mkdirSync(path.dirname(file),{recursive:true});
+  if(fs.existsSync(file)&&fs.statSync(file).size>=131072){fs.rmSync(file+'.1',{force:true});fs.renameSync(file,file+'.1');}
+  fs.appendFileSync(file,JSON.stringify({time:new Date().toISOString(),version:app.getVersion(),...entry})+'\n',{mode:0o600});
+ }catch(_){} // A diagnostic write failure must not retry or duplicate checkout.
+}
 function storage(owner){const root=path.join(app.getPath('userData'),'profiles',crypto.createHash('sha256').update(owner).digest('hex'));fs.mkdirSync(root,{recursive:true});savePath=path.join(root,'progress.json');const keyFile=path.join(root,'integrity.key');if(!safeStorage.isEncryptionAvailable())throw new Error('SECURE_STORAGE_UNAVAILABLE');if(fs.existsSync(keyFile))saveKey=safeStorage.decryptString(fs.readFileSync(keyFile));else{saveKey=crypto.randomBytes(32).toString('hex');atomic(keyFile,safeStorage.encryptString(saveKey));}try{return unseal(fs.readFileSync(savePath,'utf8'),saveKey);}catch(e){if(e.code!=='ENOENT')boot.saveWarning=true;return null;}}
 async function api(route,payload,anonymous=false){if(!anonymous&&!token)return {ok:false,status:401,error:'AUTH_REQUIRED'};try{const r=await fetch(config.backendUrl.replace(/\/$/,'')+route,{method:payload===undefined?'GET':'POST',redirect:'error',headers:{'Content-Type':'application/json',...(!anonymous?{Authorization:'Bearer '+token}:{})},body:payload===undefined?undefined:JSON.stringify(payload),signal:AbortSignal.timeout(20000)});const value=await r.json();if(r.status===401)token='';return r.ok?{ok:true,value}:{ok:false,status:r.status,error:value.error||'SERVICE_UNAVAILABLE'};}catch(_){return {ok:false,status:503,error:'SERVICE_UNAVAILABLE'};}}
 async function flushCloud(){if(!token||!dirtySave||cloudBusy)return;cloudBusy=true;const value=dirtySave;try{const r=await api('/api/progress',value);if(r.ok&&dirtySave===value)dirtySave=null;}finally{cloudBusy=false;}}
@@ -24,6 +32,6 @@ async function start(){let args;try{args=launchArgs(process.argv);boot.locale=ar
  ipcMain.on('nono:bootstrap',e=>{e.returnValue=goodSender(e)?boot:{ready:false,error:'UNTRUSTED_SENDER'};});
  ipcMain.on('nono:save',(e,value)=>{let saved=false;if(goodSender(e)&&boot.ready&&saveKey){try{if(!value||value.version!==1)throw new Error();atomic(savePath,seal(value,saveKey));boot.state=value;dirtySave=value;clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,1500);saved=true;}catch(_){}}e.returnValue=saved;});
  ipcMain.handle('nono:api',(e,route,payload)=>goodSender(e)&&allowedRequest(route,payload)?api(route,payload):{ok:false,status:403,error:'REQUEST_NOT_ALLOWED'});
- let paymentBusy=false;ipcMain.handle('nono:purchase',async(e,product,requestId)=>{if(!goodSender(e)||!token||boot.preview||paymentBusy)return {ok:false,status:409,error:'PAYMENT_UNAVAILABLE'};if(!['coins_500','coins_1200','coins_3000','coins_7000','starter'].includes(product)||typeof requestId!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(requestId))return {ok:false,status:400,error:'INVALID_PRODUCT'};paymentBusy=true;try{const r=await api('/api/vkplay/order',{product,requestId});if(!r.ok)return r;if(r.value.status==='paid')return {ok:true,value:{orderId:r.value.orderId,status:r.value.status}};const overlay=gameOverlay.open(r.value.paymentUrl);boot.overlay=gameOverlay.status();if(!overlay.ok)return {ok:false,status:503,error:overlay.error};return {ok:true,value:{orderId:r.value.orderId,status:r.value.status,overlayVisible:overlay.visible}};}catch(_){return {ok:false,status:503,error:'OVERLAY_UNAVAILABLE'};}finally{paymentBusy=false;}});
+ let paymentBusy=false;ipcMain.handle('nono:purchase',async(e,product,requestId)=>{if(!goodSender(e)||!token||boot.preview||paymentBusy)return {ok:false,status:409,error:'PAYMENT_UNAVAILABLE'};if(!['coins_500','coins_1200','coins_3000','coins_7000','starter'].includes(product)||typeof requestId!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(requestId))return {ok:false,status:400,error:'INVALID_PRODUCT'};paymentBusy=true;try{const r=await api('/api/vkplay/order',{product,requestId});if(!r.ok)return r;if(r.value.status==='paid')return {ok:true,value:{orderId:r.value.orderId,status:r.value.status}};const overlay=await gameOverlay.open(r.value.paymentUrl);boot.overlay=gameOverlay.status();if(!overlay.ok)return {ok:false,status:503,error:overlay.error};return {ok:true,value:{orderId:r.value.orderId,status:r.value.status,overlaySubmitted:overlay.submitted}};}catch(_){return {ok:false,status:503,error:'OVERLAY_UNAVAILABLE'};}finally{paymentBusy=false;}});
  setInterval(flushCloud,30000).unref();await win.loadURL(boot.ready?'nono://game/game/index.html':'nono://game/desktop/launch.html');win.show();
 }

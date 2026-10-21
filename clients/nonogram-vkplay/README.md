@@ -1,8 +1,8 @@
-# Nonogram для VK Play — 3.2.3
+# Nonogram для VK Play — 3.2.6
 
 Существующая игра «Нонограммы: Маленькие миры», 507 головоломок и 10 миров, упакованная в Windows 10/11 x64 приложение Electron. Исходный каталог MAX/Яндекс не изменяется.
 
-**Клиент 3.2.3, 20.10.2026, готов для Test:** открытие оплаты переведено с shell-протокола на документированный GCLay `DemandBrowserForm`. Клиент проверяет наличие SDK, связь с Game Center и результат вызова. Принятый запрос больше не обозначается как уже открытая форма. [Windows CI 39461965930](https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930) прошёл: 83 Python, 28 Node, 14 UI, реальный EXE и новый addon с локальной DLL. Проверка реального Game Center и тестового начисления остаётся отдельной. [Скачать готовую сборку](https://github.com/rusta-m22/max-games-catalog/actions/runs/39461965930/artifacts/12282324110).
+**Клиент 3.2.6, 21.10.2026:** по рекомендации поддержки кнопка оплаты использует `vkplay://demandbrowserform/` через Electron `shell.openExternal` (Windows `ShellExecuteExW`). Прямой вызов GCLay убран из рабочего пути и DLL-мост не поставляется. Локально прошли 29 Node-проверок; результаты нового Windows CI и ссылка на ZIP будут зафиксированы в [изменениях 3.2.6](docs/CHANGES-3.2.6.md). Фактический показ формы в Game Center и sandbox-платёж пока не подтверждены.
 
 Точный разрешённый домен `co.vkpay.ru` из 3.2.2 сохранён вместе с `vkplay.ru`. Backend для этого изменения обновлять не нужно. Его параметр `VKPLAY_PAYMENT_HOSTS=vkplay.ru,co.vkpay.ru` должен оставаться заданным. Секреты, кошелёк, подписи callback и защита от повторного начисления не меняются.
 
@@ -11,16 +11,16 @@
 GitHub Actions автоматически применяет публичные параметры существующего Miami backend и GCID 0.2046788. Исходный config.json остаётся пустым шаблоном; для ручной сборки сначала configure. Секретов в клиенте нет.
 
 - `game/` — сохранённая игра и графика.
-- `desktop/` — изолированный native-мост, сохранения через Windows DPAPI и Game Center launch guard.
-- `native/` — небольшой Node-API модуль для документированных функций GCLay. DLL Game Center не включается в поставку; используется только путь из `GC_GCLAY64_PATHNAME`.
+- `desktop/` — изолированный IPC-мост, сохранения через Windows DPAPI и Game Center launch guard.
+- `native/` — исторический эксперимент 3.2.3; в 3.2.6 не вызывается, не собирается и не включается в поставку.
 - `server/` — GAS, подписанные callback, атомарный кошелёк SQLite, защита от повторного tid; самостоятельная поставка Amvera, только Miami-0.
 - `tests/` — локальные контракты, browser-сценарии с имитацией площадки, отдельный реальный Windows EXE smoke test.
 - `ci/nonogram-vkplay.yml` — копия workflow, устанавливаемая в корень репозитория `.github/workflows/nonogram-vkplay.yml`.
-- [Простая инструкция загрузки](docs/UPLOAD-RU.md).
+- [Простая инструкция для текущей сборки](docs/QUICKSTART-RU.md).
 
 ## Сборка и проверки
 
-Node.js 24 и Python 3.12. Для сборки клиента нужен Windows x64, Visual Studio 2022 Build Tools (C++ и Windows SDK). Скрипт через npm exec использует node-gyp 13.1.0 и заголовки установленной версии Electron; параметры системного HOME не меняются:
+Node.js 24 и Python 3.12. Для запуска Windows-проверок нужен чистый Windows x64 runner без установленного обработчика `vkplay:`. Сборка 3.2.6 больше не компилирует нативный addon:
 
 ```sh
 npm ci
@@ -35,4 +35,4 @@ python3 tools/package.py
 
 Публичные параметры задаются через `npm run configure -- --backend https://YOUR-BACKEND/ --gcid 0.YOURID`, после чего нужно заново выполнить сборку. Секрет API остаётся только на сервере. `npm run upload:test` по умолчанию выполняет dry-run; `python3 tools/upload-test.py --execute` загружает настроенную сборку на Test при наличии защищённого VKPLAY_BUILD_TOKEN.
 
-Итог: `dist/Nonogram-VKPlay-win-x64/` и `deliverables/Nonogram-VKPlay-Windows-x64-3.2.3.zip`. Распространять нужно весь каталог. Клиент не содержит механизмов реальных платежей вне VK Play. Game Center/overlay, реальные sandbox-транзакции и допуск на Live фиксируются отдельно в [протоколе проверки](docs/SANDBOX-CHECKLIST.md).
+Итог: `dist/Nonogram-VKPlay-win-x64/` и `deliverables/Nonogram-VKPlay-Windows-x64-3.2.6.zip`. Распространять нужно весь каталог. Клиент не содержит механизмов реальных платежей вне VK Play. Game Center/overlay, реальные sandbox-транзакции и допуск на Live фиксируются отдельно в [протоколе проверки](docs/SANDBOX-CHECKLIST.md).
