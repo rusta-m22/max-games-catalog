@@ -1,0 +1,57 @@
+{
+  "comparison": "Uploaded last.xml RunCheck metadata versus verified CI artifact; installed disk files were not read",
+  "artifact_id": 12282324110,
+  "artifact_inner_sha256": "a2d526ab776199416fd822e7dde1f11cba6bda01a0dedfe2fdbb2b6f28e0709d",
+  "package_version": "3.2.3",
+  "records": [
+    {
+      "name": "d3dcompiler_47.dll",
+      "manifest_md5": "19E527A35241C171D37DC1E6C530053C",
+      "artifact_md5": "19E527A35241C171D37DC1E6C530053C",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "dxcompiler.dll",
+      "manifest_md5": "E301F37E2DFCA8D2B501D3444C7EF14D",
+      "artifact_md5": "E301F37E2DFCA8D2B501D3444C7EF14D",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "dxil.dll",
+      "manifest_md5": "C9A7241CE83437D54A82522AA0B54575",
+      "artifact_md5": "C9A7241CE83437D54A82522AA0B54575",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "ffmpeg.dll",
+      "manifest_md5": "B55E35EFBEC9CDD8887BD9AB651E83E7",
+      "artifact_md5": "B55E35EFBEC9CDD8887BD9AB651E83E7",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "Nonogram.exe",
+      "manifest_md5": "7015AA7B025043DF97194749ADA260E0",
+      "artifact_md5": "7015AA7B025043DF97194749ADA260E0",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "vk_swiftshader.dll",
+      "manifest_md5": "62E84AED04270080784065064F245E95",
+      "artifact_md5": "62E84AED04270080784065064F245E95",
+      "hash_matches": true,
+      "size_matches": true
+    },
+    {
+      "name": "vulkan-1.dll",
+      "manifest_md5": "C4A168D6B121F3F4A579327EA2A8A9D3",
+      "artifact_md5": "C4A168D6B121F3F4A579327EA2A8A9D3",
+      "hash_matches": true,
+      "size_matches": true
+    }
+  ]
+}
