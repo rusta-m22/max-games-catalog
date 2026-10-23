@@ -38,7 +38,7 @@ async function verifyShellProtocol(running,root,report) {
     assert.equal(uri.protocol,'vkplay:');assert.equal(uri.hostname,'demandbrowserform');
     assert.equal(uri.pathname,'/0.2046788/');assert.equal(uri.searchParams.get('url'),payment);
     assert.equal(uri.searchParams.get('width'),'80%');assert.equal(uri.searchParams.get('height'),'80%');
-    assert.equal(uri.searchParams.get('caption'),'Nonogram - VK Play');
+    assert.equal(uri.searchParams.get('caption'),'Нонограммы — Мир пикселей');
     assert.deepEqual(result.logs.map(x=>x.event),['requested','submitted']);
     assert(!JSON.stringify(result.logs).includes('local%2F123'));
     report.shellProtocolDispatchTested=true;

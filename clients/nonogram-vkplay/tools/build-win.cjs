@@ -29,7 +29,7 @@ async function build() {
     info.setFileVersion(major, minor, patch, 0, 1033);
     info.setProductVersion(major, minor, patch, 0, 1033);
     info.setStringValues({lang:1033, codepage:1200}, {
-      FileDescription:'Nonograms - Little Worlds', ProductName:'Nonogram VK Play',
+      FileDescription:'Нонограммы — Мир пикселей', ProductName:'Нонограммы — Мир пикселей',
       InternalName:'Nonogram', OriginalFilename:'Nonogram.exe',
       CompanyName:'Rustam Igishev', LegalCopyright:'Copyright 2026 Rustam Igishev',
     });
@@ -51,7 +51,7 @@ async function build() {
   if (!config.releaseConfigured) fs.writeFileSync(path.join(dest, 'Preview.cmd'),
     '@echo off\r\ncd /d "%~dp0"\r\nstart "" "Nonogram.exe" --preview\r\n');
   fs.writeFileSync(path.join(dest, 'README-WINDOWS.txt'),
-    `Nonogram ${pkg.version} - Windows 10/11 x64\nExtract the complete folder.\n`+
+    `Нонограммы — Мир пикселей ${pkg.version} - Windows 10/11 x64\nExtract the complete folder.\n`+
     (config.releaseConfigured ? 'Start from VK Play Game Center.\n' : 'Preview.cmd opens the game without payments.\n')+
     'VK Play Game Center, overlay and platform sandbox payments require separate testing.\n');
   const buildInfo = {version:pkg.version, electron:version, platform:'win32', arch:'x64',
