@@ -1,0 +1,39 @@
+{
+  "version": "3.2.7",
+  "title": "Нонограммы — Мир пикселей",
+  "englishTitle": "Nonograms — Pixel World",
+  "sourceCommit": "54a45a724b9acae17845e9dd8c0a46c7e2dbf169",
+  "mergedCommit": "e307a849d997581657f6bf0c170c73ed8a6bc275",
+  "ci": {
+    "runId": 39904839686,
+    "url": "https://github.com/rusta-m22/max-games-catalog/actions/runs/39904839686",
+    "pythonTests": 83,
+    "nodeTestsLinux": 29,
+    "nodeTestsWindows": 29,
+    "browserChecks": 14,
+    "contractsPassed": true,
+    "windowsPassed": true,
+    "testUpload": "skipped"
+  },
+  "archive": {
+    "name": "Nonogram-VKPlay-Windows-x64-3.2.7.zip",
+    "bytes": 176505261,
+    "sha256": "90dd9036f5be1c8e1a91b45a1094f98dec599612121025f2940cca4e947c7cf5",
+    "artifactId": 12479859905
+  },
+  "exe": {
+    "name": "Nonogram.exe",
+    "sha256": "d22fe44dda17255353a1776d3c37d10adc055db95e2638e567885745872430d2",
+    "architecture": "PE AMD64",
+    "fileDescriptionAndProductNameVerified": true,
+    "codeSigned": false
+  },
+  "runtimeSourcesMatch": true,
+  "saveStorageIdentity": "NonogramVKPlay",
+  "windowsPreviewPassed": true,
+  "windowsConfiguredLaunchGuardPassed": true,
+  "checkoutCaptionVerifiedWithLocalWindowsHandler": true,
+  "realGameCenter327Tested": false,
+  "realPayment327Tested": false,
+  "livePublished": false
+}
