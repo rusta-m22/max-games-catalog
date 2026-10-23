@@ -22,7 +22,7 @@ test('dispatches the support-requested vkplay URI once and preserves the signed 
   assert.equal(uri.protocol,'vkplay:');assert.equal(uri.hostname,'demandbrowserform');
   assert.equal(uri.pathname,'/0.2046788/');assert.equal(uri.searchParams.get('url'),url);
   assert.equal(uri.searchParams.get('width'),'80%');assert.equal(uri.searchParams.get('height'),'80%');
-  assert.equal(uri.searchParams.get('caption'),'Nonogram - VK Play');
+  assert.equal(uri.searchParams.get('caption'),'Нонограммы — Мир пикселей');
   assert.deepEqual(calls[0][1],{logUsage:true});
 });
 test('awaits Windows dispatch instead of treating an unresolved Promise as success',async()=>{

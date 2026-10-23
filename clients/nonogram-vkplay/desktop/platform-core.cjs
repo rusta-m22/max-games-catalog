@@ -18,7 +18,7 @@ function overlayUrl(url,c){
  // VK Play support requested vkplay:// on 2026-10-21. Docs still show mycomgames://.
  // Encode the ORIGINAL signed URL exactly once, not u.href. No cmd/start.
  const command='vkplay://demandbrowserform/'+c.gcid+'/?url='+encodeURIComponent(url)+
-  '&width=80%&height=80%&caption='+encodeURIComponent('Nonogram - VK Play');
+  '&width=80%&height=80%&caption='+encodeURIComponent('Нонограммы — Мир пикселей');
  if(command.length>2081)throw new Error('PAYMENT_URL_TOO_LONG');
  return command;
 }
