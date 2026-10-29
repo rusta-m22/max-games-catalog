@@ -1,6 +1,6 @@
 {
   "name": "nonogram-vkplay",
-  "version": "3.2.7",
+  "version": "3.2.8",
   "private": true,
   "description": "Nonograms — Pixel World — VK Play Windows client",
   "main": "desktop/main.cjs",
@@ -21,3 +21,4 @@
     "resedit": "3.1.0"
   }
 }
+
