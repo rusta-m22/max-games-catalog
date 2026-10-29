@@ -10,7 +10,7 @@ app.setName('NonogramVKPlay');
 let win,token='',boot={ready:false,authorized:false},savePath,saveKey,dirtySave,cloudTimer,cloudBusy=false;
 if(!app.requestSingleInstanceLock())app.quit();else{
  app.on('second-instance',()=>{if(win){win.show();win.focus();}});
- app.on('window-all-closed',()=>app.quit());app.whenReady().then(start).catch(()=>app.exit(1));
+ app.on('window-all-closed',()=>{clearTimeout(cloudTimer);Promise.race([flushCloud(),new Promise(resolve=>setTimeout(resolve,2000))]).finally(()=>app.quit());});app.whenReady().then(start).catch(()=>app.exit(1));
 }
 function goodSender(e){return e.sender===win?.webContents&&e.senderFrame===win.webContents.mainFrame&&e.senderFrame.url.startsWith('nono://game/');}
 function atomic(file,data){fs.mkdirSync(path.dirname(file),{recursive:true});const tmp=file+'.tmp',fd=fs.openSync(tmp,'w',0o600);try{fs.writeFileSync(fd,data);fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(tmp,file);}
@@ -32,6 +32,12 @@ async function start(){let args;try{args=launchArgs(process.argv);boot.locale=ar
  ipcMain.on('nono:bootstrap',e=>{e.returnValue=goodSender(e)?boot:{ready:false,error:'UNTRUSTED_SENDER'};});
  ipcMain.on('nono:save',(e,value)=>{let saved=false;if(goodSender(e)&&boot.ready&&saveKey){try{if(!value||value.version!==1)throw new Error();atomic(savePath,seal(value,saveKey));boot.state=value;dirtySave=value;clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,1500);saved=true;}catch(_){}}e.returnValue=saved;});
  ipcMain.handle('nono:api',(e,route,payload)=>goodSender(e)&&allowedRequest(route,payload)?api(route,payload):{ok:false,status:403,error:'REQUEST_NOT_ALLOWED'});
- let paymentBusy=false;ipcMain.handle('nono:purchase',async(e,product,requestId)=>{if(!goodSender(e)||!token||boot.preview||paymentBusy)return {ok:false,status:409,error:'PAYMENT_UNAVAILABLE'};if(!['coins_500','coins_1200','coins_3000','coins_7000','starter'].includes(product)||typeof requestId!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(requestId))return {ok:false,status:400,error:'INVALID_PRODUCT'};paymentBusy=true;try{const r=await api('/api/vkplay/order',{product,requestId});if(!r.ok)return r;if(r.value.status==='paid')return {ok:true,value:{orderId:r.value.orderId,status:r.value.status}};const overlay=await gameOverlay.open(r.value.paymentUrl);boot.overlay=gameOverlay.status();if(!overlay.ok)return {ok:false,status:503,error:overlay.error};return {ok:true,value:{orderId:r.value.orderId,status:r.value.status,overlaySubmitted:overlay.submitted}};}catch(_){return {ok:false,status:503,error:'OVERLAY_UNAVAILABLE'};}finally{paymentBusy=false;}});
+ const checkout=require('./checkout.cjs').createCheckout({api,overlay:gameOverlay,log:checkoutLog});
+ for(const [channel,checkOnly] of [['nono:purchase',false],['nono:check-purchase',true]])ipcMain.handle(channel,async(e,product,requestId)=>{
+  if(!goodSender(e)||!token||boot.preview)return {ok:false,status:401,error:'AUTH_REQUIRED'};
+  const result=await checkout(product,requestId,checkOnly);boot.overlay=gameOverlay.status();return result;
+ });
+ ipcMain.handle('nono:quit',e=>{if(!goodSender(e))return {ok:false,error:'UNTRUSTED_SENDER'};setImmediate(()=>{if(win&&!win.isDestroyed())win.close();});return {ok:true};});
  setInterval(flushCloud,30000).unref();await win.loadURL(boot.ready?'nono://game/game/index.html':'nono://game/desktop/launch.html');win.show();
 }
+

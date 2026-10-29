@@ -82,6 +82,30 @@ async function ready(page) {
         completed:!!Game.state.done['w1-1'],language:Game.lang}));
       assert.deepEqual(restored,{...expected,completed:true,language:'en'});
       report.checks.push('Hint purchase, RU/EN, disabled real-money checkout and restart persistence pass');
+      await page.evaluate(()=>Game.navigate('home'));
+      await page.locator('.page [data-action="quit"]').click();
+      await page.locator('#modal-root [data-action="close"]').last().click();
+      assert.equal(await page.locator('[data-action="quit-confirm"]').count(),0);
+      await page.locator('.page [data-action="quit"]').click();
+      await page.screenshot({path:path.join(root,'evidence/native-windows-exit-menu.png')});
+      let closed=running.waitForEvent('close',{timeout:15000});
+      await page.locator('[data-action="quit-confirm"]').click();await closed;running=null;
+      report.checks.push('Main-menu Exit game: cancel stays in game; Save and exit closes the actual packaged process');
+      page=await open(['--preview']);await ready(page);
+      await page.evaluate(()=>{Game.state.settings.lang='ru';Game.applySettings();Game.start('w1-2');});
+      if(await page.locator('#modal-root [data-action="close"]').count())await page.locator('#modal-root [data-action="close"]').first().click();
+      const cell=await page.evaluate(()=>{const b=Game.board,i=Array.from(b.q.grid,Number).findIndex((v,i)=>v>0&&b.values[i]!==v);return {x:b.gx+(i%b.p.n+.5)*b.cell,y:b.gy+(Math.floor(i/b.p.n)+.5)*b.cell};});
+      const playBox=await page.locator('#board').boundingBox();await page.mouse.click(playBox.x+cell.x,playBox.y+cell.y);
+      const draftCells=await page.evaluate(()=>Game.board.values.map(v=>v===-1?'x':v).join(''));
+      await page.locator('[data-action="pause"]').click();
+      await page.screenshot({path:path.join(root,'evidence/native-windows-exit-pause.png')});
+      await page.locator('#modal-root [data-action="quit"]').click();
+      closed=running.waitForEvent('close',{timeout:15000});
+      await page.locator('[data-action="quit-confirm"]').click();await closed;running=null;
+      page=await open(['--preview']);await ready(page);
+      assert.equal(await page.evaluate(()=>Game.state.drafts['w1-2']?.cells),draftCells);
+      assert.equal(await page.evaluate(()=>Game.state.coins),expected.coins);
+      report.checks.push('In-game pause Exit closes the actual process; restart restores exact unfinished grid and balance');
       await running.close();running=null;
     }
     assert.deepEqual(report.errors,[]);report.passed=true;
@@ -91,3 +115,4 @@ async function ready(page) {
   }
   console.log(JSON.stringify(report,null,2));
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

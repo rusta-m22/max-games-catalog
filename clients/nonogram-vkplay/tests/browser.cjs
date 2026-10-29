@@ -2,6 +2,7 @@
 'use strict';
 const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
+const {createCheckout}=require('../desktop/checkout.cjs');
 const {overlayUrl}=require('../desktop/platform-core.cjs'),paymentHosts=require('../desktop/config.json').paymentHosts;
 const overlayConfig={releaseConfigured:true,backendUrl:'https://backend.example/',gcid:'0.2046788',paymentHosts};
 async function until(page,fn,arg){const end=Date.now()+30000;while(Date.now()<end){if(await page.evaluate(fn,arg))return;await new Promise(r=>setTimeout(r,100));}throw new Error('Condition timed out: '+fn.toString());}
@@ -18,14 +19,32 @@ async function until(page,fn,arg){const end=Date.now()+30000;while(Date.now()<en
   async function checkoutMode(timeout){await fetch(base+'/test/checkout-mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({timeout})});}
   async function confirm(product,orderId,tid=crypto.randomUUID()){const params={uid:'42',sum:'99.00',tid,merchant_param:JSON.stringify({uid:'42',item_id:product,additional_param:orderId})};params.sign=crypto.createHash('md5').update(Object.keys(params).sort().map(k=>k+'='+params[k]).join('')+'local-test-secret-not-a-credential').digest('hex');assert.equal((await (await fetch(base+'/api/vkplay/callback?'+new URLSearchParams(params))).json()).status,'ok');}
   await context.exposeBinding('testApi',(_s,p,v)=>api(p,v));
-  await context.exposeBinding('testPurchase',async(_s,product,requestId)=>{nativeCalls.push({product,requestId});if(mode==='offline')return {ok:false,status:502,error:'NETWORK'};const r=await api('/api/vkplay/order',{product,requestId});if(!r.ok)return r;lastOrder=r.value;if(lastOrder.status!=='paid'){const overlay=new URL(overlayUrl(lastOrder.paymentUrl,overlayConfig));assert.equal(new URL(overlay.searchParams.get('url')).hostname,'co.vkpay.ru');}if(mode==='success'&&lastOrder.status!=='paid')await confirm(product,lastOrder.orderId);return {ok:true,value:{orderId:lastOrder.orderId,status:lastOrder.status}};});
-  await context.addInitScript(({wallet,progress})=>{window.Native={bootstrap:()=>({ready:true,authorized:true,preview:false,userId:'42',locale:'ru-RU',wallet,state:JSON.parse(localStorage.getItem('test-save')||'null')||progress}),save:v=>{if(window.testSaveUnavailable)return false;localStorage.setItem('test-save',JSON.stringify(v));return true;},api:(p,v)=>window.testApi(p,v),purchase:(p,r)=>window.testPurchase(p,r)};},{wallet:auth.wallet,progress:auth.progress});
+  let overlayFailure=false;const dispatched=[];
+  const checkout=createCheckout({api,overlay:{open:async url=>{
+   if(overlayFailure)return {ok:false,error:'INVALID_PAYMENT_URL'};
+   const overlay=new URL(overlayUrl(url,overlayConfig));assert.equal(new URL(overlay.searchParams.get('url')).hostname,'co.vkpay.ru');dispatched.push(url);return {ok:true,submitted:true};
+  }}});
+  async function nativePurchase(product,requestId,checkOnly=false){
+   nativeCalls.push({product,requestId,checkOnly});if(mode==='offline')return {ok:false,status:502,error:'NETWORK'};
+   const r=await checkout(product,requestId,checkOnly);if(!r.ok)return r;lastOrder=r.value;
+   if(mode==='success'&&!checkOnly&&lastOrder.status!=='paid')await confirm(product,lastOrder.orderId);return r;
+  }
+  await context.exposeBinding('testPurchase',(_s,p,r)=>nativePurchase(p,r));
+  await context.exposeBinding('testCheckPurchase',(_s,p,r)=>nativePurchase(p,r,true));
+  await context.addInitScript(({wallet,progress})=>{window.Native={bootstrap:()=>({ready:true,authorized:true,preview:false,userId:'42',locale:'ru-RU',wallet,state:JSON.parse(localStorage.getItem('test-save')||'null')||progress}),save:v=>{if(window.testSaveUnavailable)return false;localStorage.setItem('test-save',JSON.stringify(v));return true;},api:(p,v)=>window.testApi(p,v),checkPurchase:(p,r)=>window.testCheckPurchase(p,r),purchase:(p,r)=>window.testPurchase(p,r),quit:async()=>{window.testQuitCalls=(window.testQuitCalls||0)+1;return {ok:true};}};},{wallet:auth.wallet,progress:auth.progress});
   const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);await until(page,()=>window.Game?.board&&Platform.uiReady);await page.locator('#modal-root [data-action="close"]').first().click();
   const cells=await page.evaluate(()=>{const b=Game.board;return Array.from(b.q.grid,Number).map((v,i)=>({v,x:b.gx+(i%b.p.n+.5)*b.cell,y:b.gy+(Math.floor(i/b.p.n)+.5)*b.cell})).filter(x=>x.v>0);}),box=await page.locator('#board').boundingBox();for(const c of cells)await page.mouse.click(box.x+c.x,box.y+c.y);
   await until(page,()=>Game.board?.won&&Game.state.coins===155);await page.locator('[data-action="after-win"]').waitFor({state:'visible'});await page.screenshot({animations:'disabled',path:path.join(root,'evidence','victory.png')});report.checks.push('Puzzle solved by mouse; server reward +35; victory art visible');
   await page.locator('[data-action="after-win"]').click();await page.locator('.sidebar [data-target="shop"]').click();await until(page,()=>!document.querySelector('[data-action="eco-product"]').disabled);assert.equal(await page.locator('[data-action="eco-product"]').count(),5);assert.equal(await page.locator('[data-action="eco-ad"],[data-action="reward-hint"]').count(),0);report.checks.push('RU shop: five products, no advertising controls; simulated VK Pay URL passes actual native overlay URL builder');
+  for(const product of ['coins_500','coins_1200','coins_3000','coins_7000']){
+   const n=dispatched.length;await page.locator(`[data-action="eco-product"][data-id="${product}"]`).click();
+   await until(page,p=>!document.querySelector('[data-action="eco-product"][data-id="'+p+'"]').disabled,product);
+   assert.equal(dispatched.length,n+1);
+  }
+  report.checks.push('All four coin packs dispatch through the real checkout coordinator with a simulated Windows opener');
+  const initialPending=await page.evaluate(()=>Game.state.economy.pendingOrders.length);
   const before=(await api('/api/wallet')).value.wallet.coins;
-  for(let i=1;i<=6;i++){await page.locator('[data-action="eco-product"][data-id="coins_500"]').click();await until(page,n=>Game.state.economy.pendingOrders.length===n,i);}
+  for(let i=1;i<=6;i++){await page.locator('[data-action="eco-product"][data-id="coins_500"]').click();await until(page,n=>Game.state.economy.pendingOrders.length===n,initialPending+i);}
   assert.equal((await api('/api/wallet')).value.wallet.coins,before);report.checks.push('Six local checkout requests without callback grant zero coins');
   mode='success';await page.locator('[data-action="eco-product"][data-id="coins_500"]').click();await until(page,n=>Game.state.coins===n,before+500);await until(page,id=>!Game.state.economy.pendingOrders.includes(id),lastOrder.orderId);report.checks.push('Signed local callback grants exactly 500 and confirms amid pending orders');
   await page.screenshot({animations:'disabled',path:path.join(root,'evidence','shop.png')});await page.locator('[data-action="eco-buy"][data-id="hint_cell"]').click();await until(page,n=>Game.state.coins<n,before+500);const after=(await api('/api/wallet')).value.wallet;assert.equal(after.hintCredits.cell,4);report.checks.push('Hint purchase debits server wallet and adds one hint');
@@ -60,13 +79,34 @@ async function until(page,fn,arg){const end=Date.now()+30000;while(Date.now()<en
   await confirm('coins_3000',lateOrder.id,'late-ui-transaction');await confirm('coins_3000',lateOrder.id,'late-ui-transaction');await checkoutMode(false);const callsBeforeLate=nativeCalls.length;
   await page.locator('[data-action="eco-retry-checkout"]').click();await until(page,n=>Game.state.coins===n,retryBefore+4200);assert.equal(nativeCalls.length,callsBeforeLate+1);
   report.checks.push('Late paid old order is recovered instead of creating another checkout; duplicate callback credits once');
+  mode='pending';overlayFailure=true;
+  const stuck=page.locator('[data-action="eco-product"][data-id="coins_3000"]');await stuck.click();
+  await page.locator('[data-action="eco-retry-checkout"]').waitFor();
+  const stuckRequest=await page.evaluate(()=>Game.state.economy.purchaseRequests.coins_3000),beforeRecovery=nativeCalls.length;
+  await page.locator('[data-action="eco-retry-checkout"]').click();await until(page,n=>window.Game.state.economy.purchaseRequests.coins_3000!==n,stuckRequest);
+  await until(page,()=>!document.querySelector('[data-action="eco-retry-checkout"]').disabled);
+  assert.equal(nativeCalls.length,beforeRecovery+2);assert.equal(nativeCalls.at(-2).checkOnly,true);assert.equal(nativeCalls.at(-2).requestId,stuckRequest);
+  overlayFailure=false;await page.locator('[data-action="eco-retry-checkout"]').click();await page.locator('[data-action="eco-retry-checkout"]').waitFor({state:'detached'});
+  assert.equal((await api('/api/wallet')).value.wallet.coins,retryBefore+4200);
+  report.checks.push('3000-coin cached-link failure: explicit retry checks the old order without reopening its URL, dispatches a fresh order and grants no coins');
   await checkoutMode(true);mode='pending';await page.locator('[data-action="eco-product"][data-id="starter"]').click();await page.locator('[data-action="eco-product"][data-id="starter"]').click();await page.locator('[data-action="eco-check-payment"]').waitFor();assert.equal(await page.locator('[data-action="eco-retry-checkout"]').count(),0);
   const starterRequest=await page.evaluate(()=>Game.state.economy.purchaseRequests.starter),callsBeforeStarter=nativeCalls.length;await page.locator('[data-action="eco-check-payment"]').click();await until(page,()=>!document.querySelector('[data-action="eco-check-payment"]').disabled);assert.equal(nativeCalls.length,callsBeforeStarter);assert.equal(await page.evaluate(()=>Game.state.economy.purchaseRequests.starter),starterRequest);await page.locator('#modal-root [data-action="close"]').first().click();
   report.checks.push('Uncertain one-time starter never offers a second checkout; balance refresh keeps its original request');
   await page.evaluate(()=>{Game.state.settings.lang='en';Game.applySettings();Game.navigate('shop');});assert((await page.locator('body').innerText()).includes('Open VK Play checkout'));
   await checkoutMode(true);await page.locator('[data-action="eco-product"][data-id="coins_7000"]').click();await page.locator('[data-action="eco-product"][data-id="coins_7000"]').click();await page.locator('[data-action="eco-retry-checkout"]').waitFor();assert((await page.locator('#modal-root').innerText()).includes('New attempt'));await checkoutMode(false);
-  report.checks.push('English shop and explicit retry dialog render');await context.close();
+  report.checks.push('English shop and explicit retry dialog render');
+  await page.evaluate(()=>{Game.closeModal();Game.navigate('home');});
+  await page.locator('.topbar [data-action="quit"]').click();await page.locator('[data-action="quit-confirm"]').waitFor();
+  await page.locator('#modal-root [data-action="close"]').last().click();assert.equal(await page.evaluate(()=>window.testQuitCalls||0),0);
+  await page.evaluate(()=>{Game.state.settings.lang='ru';Game.applySettings();Game.start('w1-2');});
+  if(await page.locator('#modal-root [data-action="close"]').count())await page.locator('#modal-root [data-action="close"]').first().click();
+  await page.locator('[data-action="pause"]').click();await page.locator('#modal-root [data-action="quit"]').click();
+  await page.evaluate(()=>window.testSaveUnavailable=true);await page.locator('[data-action="quit-confirm"]').click();assert.equal(await page.evaluate(()=>window.testQuitCalls||0),0);
+  await page.evaluate(()=>window.testSaveUnavailable=false);await page.locator('[data-action="quit-confirm"]').click();await until(page,()=>window.testQuitCalls===1);
+  assert(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-save')).drafts['w1-2']));
+  report.checks.push('RU/EN exit controls: cancel stays open, failed save prevents exit, pause exit saves the current puzzle before invoking Native.quit');await context.close();
   const preview=await browser.newContext({viewport:{width:1024,height:768},locale:'ru-RU'});await preview.addInitScript(()=>{window.Native={bootstrap:()=>({ready:true,preview:true,authorized:false,locale:'ru-RU'}),save:()=>true,api:async()=>({ok:false,status:401,error:'AUTH_REQUIRED'}),purchase:async()=>({ok:false,error:'PAYMENT_UNAVAILABLE'})};});const p=await preview.newPage();p.on('pageerror',e=>report.errors.push(e.message));await p.goto(`http://127.0.0.1:${server.address().port}/index.html`);await until(p,()=>window.Game&&Platform.uiReady);await p.evaluate(()=>Game.navigate('shop'));assert.equal(await p.locator('[data-action="eco-product"]:enabled').count(),0);report.checks.push('1024x768 preview launches with all real-money purchases disabled');await preview.close();assert.deepEqual(report.errors,[]);report.passed=true;
  }finally{fs.writeFileSync(path.join(root,'evidence','browser-report.json'),JSON.stringify(report,null,2));await browser.close();server.close();fixture.kill();}
  console.log(JSON.stringify(report,null,2));
 })().catch(e=>{console.error(e);process.exit(1);});
+

@@ -75,7 +75,7 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
         run: npm ci
       - name: Client and content contracts on Windows
-        run: node --test tests/desktop.test.cjs tests/content.test.cjs tests/overlay.test.cjs
+        run: node --test tests/desktop.test.cjs tests/content.test.cjs tests/overlay.test.cjs tests/checkout.test.cjs
       - name: Build Windows client
         run: npm run build:win
       - name: Launch actual packaged EXE and test Windows saves
@@ -135,3 +135,4 @@ jobs:
         run: python3 tools/upload-test.py --execute
       # Assembly is ephemeral on hosted runners; bstool restores its state from GC.
       # For large builds, use a private persistent assembly folder; never cache token-bearing logs.
+
